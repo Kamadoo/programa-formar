@@ -1,0 +1,167 @@
+.boasVindas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px 32px;
+  padding: clamp(20px, 3vw, 28px);
+  position: relative;
+  overflow: hidden;
+}
+.boasVindas::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--marca);
+}
+.kpis {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.kpis > div {
+  min-width: 130px;
+  padding: 12px 16px;
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  border: 1px solid var(--borda);
+}
+.kpis dt {
+  font-size: 12.5px;
+  color: var(--texto-3);
+  font-weight: 500;
+}
+.kpis dd {
+  margin: 2px 0 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.cursos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.curso {
+  overflow: hidden;
+}
+.cursoCorpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
+  gap: 18px 28px;
+  padding: 20px 22px;
+}
+.cursoTitulo {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.freq {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pct {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.nota {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 22px 16px;
+  padding: 10px 12px;
+  border-radius: var(--raio-s);
+  background: var(--primaria-suave);
+  color: var(--primaria-forte);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.notaAlerta {
+  background: var(--alerta-bg);
+  color: var(--alerta-tx);
+}
+.notaErro {
+  background: var(--erro-bg);
+  color: var(--erro-tx);
+}
+.detalhes {
+  border-top: 1px solid var(--borda);
+}
+.detalhes summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 22px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primaria);
+}
+.detalhes summary::-webkit-details-marker {
+  display: none;
+}
+.detalhes summary:hover {
+  background: var(--superficie-2);
+}
+.detalhes summary svg {
+  transition: rotate 0.2s;
+}
+.detalhes[open] summary svg {
+  rotate: 180deg;
+}
+.painelFreq {
+  padding: 4px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.encontros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.encontros li {
+  display: grid;
+  grid-template-columns: 36px 92px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--raio-s);
+  background: var(--superficie-2);
+  border: 1px solid var(--borda);
+  font-size: 14px;
+}
+.acaoCert {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 22px;
+  border-top: 1px solid var(--borda);
+  background: var(--superficie-2);
+}
+@media (max-width: 640px) {
+  .cursoCorpo {
+    grid-template-columns: 1fr;
+  }
+  .encontros li {
+    grid-template-columns: 36px 1fr auto;
+  }
+  .encontros li > span:nth-child(3) {
+    grid-column: 1 / -1;
+    order: 4;
+    font-size: 13px;
+    color: var(--texto-3);
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "sessao" ADD COLUMN "segunda_etapa_ok" boolean DEFAULT false NOT NULL;

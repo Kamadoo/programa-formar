@@ -1,0 +1,15 @@
+# Nada de segredos, dados locais ou artefatos na imagem.
+.env*
+!.env.example
+.data
+.next
+node_modules
+.git
+tests
+docs
+playwright-report
+test-results
+*.pdf
+*.log
+Dockerfile
+.dockerignore

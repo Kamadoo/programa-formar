@@ -1,0 +1,74 @@
+.grade {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.miniatura {
+  display: block;
+  padding: 16px 16px 0;
+  background: var(--superficie-2);
+  border-bottom: 1px solid var(--borda);
+}
+.corpo {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.titulo {
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.acoes > * {
+  flex: 1;
+}
+.detalhe {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.lado {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.info {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 22px 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.info::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #35e47d, #3ecdf3, #6c60e6, #dd2287, #e6502c);
+}
+.info h1 {
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 800;
+}
+@media (max-width: 860px) {
+  .detalhe {
+    grid-template-columns: 1fr;
+  }
+}

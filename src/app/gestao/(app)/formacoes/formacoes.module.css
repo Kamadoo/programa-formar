@@ -1,0 +1,70 @@
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 18px 24px;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #35e47d, #3ecdf3, #6c60e6, #dd2287, #e6502c);
+}
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.titulo {
+  font-size: 16.5px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.titulo a {
+  color: inherit;
+  text-decoration: none;
+}
+.titulo a:hover {
+  color: var(--primaria);
+  text-decoration: underline;
+}
+.iconeInline {
+  display: inline;
+  vertical-align: -2px;
+}
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 12px 0;
+  border-block: 1px solid var(--borda);
+}
+.numeros dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+.numeros dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}

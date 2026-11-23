@@ -1,0 +1,1 @@
+ALTER TABLE "email_saida" ADD COLUMN "html" text;

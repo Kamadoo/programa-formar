@@ -1,0 +1,106 @@
+.grade th,
+.grade td {
+  padding: 8px 6px;
+}
+.grade th:first-child,
+.grade td:first-child {
+  padding-left: 16px;
+}
+.fixa {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--superficie);
+  text-align: left;
+  font-weight: inherit;
+  min-width: 210px;
+  box-shadow: 1px 0 0 var(--borda);
+}
+thead .fixa {
+  background: var(--superficie-2);
+}
+.enc {
+  display: block;
+  font-size: 11.5px;
+}
+.data {
+  display: block;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.cel {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 32px;
+  border-radius: 8px;
+  border: 0;
+  font-size: 13px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+button.cel {
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    box-shadow 0.15s;
+}
+button.cel:hover {
+  box-shadow: 0 0 0 2px var(--borda-forte);
+}
+button.cel:active {
+  transform: scale(0.94);
+}
+.p {
+  background: var(--ok-bg);
+  color: var(--ok-tx);
+}
+.f {
+  background: var(--erro-bg);
+  color: var(--erro-tx);
+}
+.agendado {
+  border: 1.5px dashed var(--borda-forte);
+  background: transparent;
+}
+.freq {
+  white-space: nowrap;
+  font-weight: 600;
+}
+.risco {
+  color: var(--erro-tx);
+}
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--borda);
+}
+.legenda .cel {
+  width: 24px;
+  height: 22px;
+  font-size: 11px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
+.legenda .cel:first-child {
+  margin-left: 0;
+}
+.grade tbody th {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--texto);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+  white-space: normal;
+}
+.grade tbody tr:hover th {
+  background: var(--superficie-2);
+}
