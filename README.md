@@ -1,9 +1,60 @@
 # Programa Formar · Certificados
 
+[![CI](https://github.com/Kamadoo/programa-formar/actions/workflows/ci.yml/badge.svg)](https://github.com/Kamadoo/programa-formar/actions/workflows/ci.yml)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Drizzle-4169E1?logo=postgresql&logoColor=white)
+![LGPD](https://img.shields.io/badge/LGPD-privacidade%20desde%20o%20projeto-0E7490)
+
+Gestão de formações de servidores, lançamento de presença e emissão de certificados com **validação pública**, num só sistema.
+
+![Painel da gestão](docs/imagens/02-painel.png)
+
 > [!IMPORTANT]
 > **Projeto de demonstração.** Este repositório existe apenas para apresentar o sistema. O município "Serra Clara", a marca, o CNPJ, o endereço, as pessoas, os CPFs, as matrículas e os e-mails são **fictícios**. Não é o site oficial de nenhum órgão público e não contém dados reais.
 
 Sistema web para uma secretaria municipal de educação **gerir as formações dos servidores e emitir certificados** com validação pública.
+
+## Telas
+
+### Gestão das formações
+
+Presença lançada por encontro, com frequência calculada na hora e certificado emitido automaticamente ao encerrar.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/imagens/04-presenca.png" alt="Grade de presença por encontro"><br><sub><b>Presença</b>: P/F por encontro, frequência e situação de cada servidor.</sub></td>
+    <td width="50%"><img src="docs/imagens/03-formacoes.png" alt="Lista de formações"><br><sub><b>Formações</b>: andamento, vínculos e certificados de cada turma.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/imagens/05-certificados.png" alt="Certificados de uma formação"><br><sub><b>Certificados</b>: frequência, carga cumprida e prévia do certificado de cada servidor.</sub></td>
+    <td><img src="docs/imagens/06-conferencia.png" alt="Conferência de certificados"><br><sub><b>Conferência</b>: quem ficou abaixo de 80% passa por decisão da gestão.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/imagens/07-modelo-certificado.png" alt="Modelo de certificado frente e verso"><br><sub><b>Modelo</b>: certificado A4, frente e verso com conteúdo programático.</sub></td>
+    <td><img src="docs/imagens/08-base-servidores.png" alt="Base de servidores"><br><sub><b>Administração</b>: base de servidores com importação em lote e edição.</sub></td>
+  </tr>
+</table>
+
+### Portal do servidor e validação pública
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/imagens/10-portal.png" alt="Portal do servidor"><br><sub><b>Meus cursos</b>: frequência de cada formação, só para consulta.</sub></td>
+    <td width="50%"><img src="docs/imagens/11-portal-certificados.png" alt="Certificados do servidor"><br><sub><b>Certificados</b>: download em PDF, frente e verso.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/imagens/12-validacao.png" alt="Validação pública de certificado"><br><sub><b>Validação pública</b>: qualquer pessoa confere a autenticidade pelo código.</sub></td>
+    <td><img src="docs/imagens/01-entrada-gestao.png" alt="Tela de entrada da gestão"><br><sub><b>Acesso</b>: senha e verificação em duas etapas obrigatória.</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="68%"><img src="docs/imagens/09-painel-escuro.png" alt="Painel no tema escuro"><br><sub><b>Tema escuro</b>, claro ou automático, com contraste acessível.</sub></td>
+    <td width="32%"><img src="docs/imagens/13-portal-celular.png" alt="Portal no celular"><br><sub><b>Celular</b>: todas as telas se adaptam a 375 px.</sub></td>
+  </tr>
+</table>
 
 ## Funcionalidades
 
