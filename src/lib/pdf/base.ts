@@ -32,6 +32,18 @@ function bytesFontes() {
   return cacheBytes;
 }
 
+/** Documento só com metadados e fontkit (o certificado usa as próprias fontes e a arte do modelo). */
+export async function documentoVazio(titulo: string) {
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  doc.setTitle(titulo);
+  doc.setAuthor('Secretaria Municipal de Educação de Serra Clara');
+  doc.setCreator('Programa Formar');
+  doc.setProducer('Programa Formar');
+  doc.setLanguage('pt-BR');
+  return doc;
+}
+
 export async function novoDocumento(titulo: string) {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);

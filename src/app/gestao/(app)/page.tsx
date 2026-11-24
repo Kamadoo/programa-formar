@@ -1,3 +1,4 @@
+import { FREQ_CONFERENCIA, FREQ_MINIMA_PADRAO, pctTexto } from '@/lib/dominio/regras';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, ClipboardCheck, GraduationCap, Plus, UsersRound } from 'lucide-react';
@@ -49,7 +50,9 @@ export default async function Painel() {
           <span className={css.valor}>{conferencia}</span>
           <span className={css.rotulo}>Aguardando conferência</span>
           <span className={css.legenda}>
-            {conferencia ? 'Frequência abaixo de 80% · conferir' : 'Nada pendente'}{' '}
+            {conferencia
+              ? `Frequência entre ${pctTexto(FREQ_CONFERENCIA)} e ${pctTexto(FREQ_MINIMA_PADRAO)} · conferir`
+              : 'Nada pendente'}{' '}
             <ArrowRight size={14} aria-hidden="true" />
           </span>
         </Link>
@@ -159,7 +162,10 @@ export default async function Painel() {
           </li>
           <li>
             <strong>Certificado ao encerrar</strong>
-            <span>≥ 80% sai automático; abaixo vai para conferência.</span>
+            <span>
+              ≥ {pctTexto(FREQ_MINIMA_PADRAO)} sai automático; de {pctTexto(FREQ_CONFERENCIA)} a{' '}
+              {pctTexto(FREQ_MINIMA_PADRAO)} vai para conferência.
+            </span>
           </li>
         </ol>
       </section>

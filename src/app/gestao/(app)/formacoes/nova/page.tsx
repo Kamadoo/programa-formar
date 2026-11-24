@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { FormFormacao } from '../FormFormacao';
+import { hojeISO } from '@/lib/dominio/datas';
 
 export const metadata: Metadata = { title: 'Nova formação' };
 
@@ -19,7 +20,7 @@ export default function NovaFormacao() {
         </div>
       </div>
       <section className="cartao cartao-corpo">
-        <FormFormacao />
+        <FormFormacao ano={Number(hojeISO().slice(0, 4))} />
       </section>
     </>
   );

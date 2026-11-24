@@ -1,4 +1,5 @@
-// Converte as fontes Inter (WOFF 1.0 do @fontsource) para TTF, formato aceito em PDF.
+// Converte as fontes Inter e Arimo (WOFF 1.0 do @fontsource) para TTF, formato aceito em PDF.
+// Arimo tem as mesmas medidas da Arial: é a fonte do modelo oficial do certificado.
 // Uso: node scripts/woff-para-ttf.mjs   → grava em assets/fontes/
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
@@ -55,4 +56,9 @@ for (const [nome, peso] of Object.entries(pesos)) {
   writeFileSync(`assets/fontes/inter-${nome}.ttf`, woffParaSfnt(woff));
 }
 copyFileSync('node_modules/@fontsource/inter/LICENSE', 'assets/fontes/LICENSE-Inter.txt');
+for (const [nome, peso] of Object.entries({ regular: 400, bold: 700 })) {
+  const woff = readFileSync(`node_modules/@fontsource/arimo/files/arimo-latin-${peso}-normal.woff`);
+  writeFileSync(`assets/fontes/arimo-${nome}.ttf`, woffParaSfnt(woff));
+}
+copyFileSync('node_modules/@fontsource/arimo/LICENSE', 'assets/fontes/LICENSE-Arimo.txt');
 console.log('Fontes TTF geradas em assets/fontes/');

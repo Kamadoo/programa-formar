@@ -30,6 +30,7 @@ export const ACOES: Record<string, string> = {
   ver_pdf: 'Abriu PDF de certificado',
   baixar_pdf: 'Baixou o próprio certificado',
   imprimir_lista: 'Gerou lista de presença',
+  imprimir_relatorio: 'Gerou relatório de formações',
   validar_ok: 'Validação pública (encontrado)',
   validar_inexistente: 'Validação pública (não encontrado)',
   criar_gestor: 'Criou conta da gestão',

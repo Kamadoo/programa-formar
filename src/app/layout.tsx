@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import '@fontsource-variable/inter';
+// Arimo (medidas da Arial): fonte do modelo oficial do certificado, só baixada onde a prévia aparece.
+import '@fontsource/arimo/latin-400.css';
+import '@fontsource/arimo/latin-700.css';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,9 +31,6 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         <a href="#conteudo" className="pular">
           Pular para o conteúdo
         </a>
-        <p className="faixa-demo" role="note">
-          Versão de demonstração · todos os dados são fictícios
-        </p>
         {children}
       </body>
     </html>

@@ -164,3 +164,53 @@ export function emailSenhaAlterada(opcoes: { nome: string; quando: Date; siteUrl
     html: layout({ titulo: 'Sua senha foi alterada', preheader: `Alteração feita em ${dataHora}.`, corpo, siteUrl })
   };
 }
+
+const PASSOS_CONVITE = [
+  'Abra o portal do servidor pelo botão abaixo e clique em <strong>Ative seu acesso</strong>.',
+  'Informe o seu CPF. Enviaremos um código de 6 números para este e-mail.',
+  'Digite o código e cadastre um aplicativo autenticador no celular (Google Authenticator, Microsoft Authenticator ou outro).',
+  'Crie a sua senha. No final, a tela mostra o seu usuário para os próximos acessos.'
+];
+
+/** Convite de primeiro acesso ao portal (enviado pela administração, em lote). */
+export function emailConvite(opcoes: { nome: string; siteUrl: string }) {
+  const { nome, siteUrl } = opcoes;
+  const url = new URL('/primeiro-acesso', siteUrl).toString();
+  const passos = PASSOS_CONVITE.map(
+    (p, i) =>
+      `<tr><td width="30" valign="top" style="width:30px;padding:0 0 12px"><div style="width:24px;height:24px;border-radius:12px;background:${COR.fundo};border:1px solid ${COR.borda};font-family:${FONTE};font-size:12px;line-height:24px;font-weight:700;text-align:center;color:${COR.primariaForte}">${i + 1}</div></td><td valign="top" style="padding:2px 0 12px 8px;font-family:${FONTE};font-size:14px;line-height:1.55;color:${COR.texto2}">${p}</td></tr>`
+  ).join('');
+  const corpo =
+    paragrafo(`Olá, ${esc(nome)}.`) +
+    paragrafo(
+      'O <strong>Programa Formar</strong> é o espaço das formações da Secretaria Municipal de Educação de Serra Clara. No portal do servidor você acompanha as formações em que está inscrito(a), confere a sua frequência e baixa os seus certificados.'
+    ) +
+    paragrafo('O seu acesso já está liberado. Para começar, faça o primeiro acesso:') +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 0">${passos}</table>` +
+    botao('Fazer o primeiro acesso', url) +
+    `<p style="margin:0 0 18px;font-family:${FONTE};font-size:12px;line-height:1.6;color:${COR.texto3}">Se o botão não abrir, copie este endereço no navegador: <span style="color:${COR.primariaForte};word-break:break-all">${esc(url)}</span></p>` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 4px"><tr><td style="padding:14px 16px;border:1px solid ${COR.alertaBorda};border-radius:10px;background:${COR.alertaFundo};font-family:${FONTE};font-size:14px;line-height:1.55;color:${COR.texto}">
+      <strong>Segurança:</strong> ninguém do Programa Formar vai pedir a sua senha ou os seus códigos. Se você não esperava este convite, ignore este e-mail.
+    </td></tr></table>`;
+  const texto = `Olá, ${nome}.
+
+O Programa Formar é o espaço das formações da Secretaria Municipal de Educação de Serra Clara. No portal do servidor você acompanha as formações em que está inscrito(a), confere a sua frequência e baixa os seus certificados.
+
+O seu acesso já está liberado. Para começar, faça o primeiro acesso:
+
+${PASSOS_CONVITE.map((p, i) => `${i + 1}. ${p.replace(/<\/?strong>/g, '')}`).join('\n')}
+
+${url}
+
+Segurança: ninguém do Programa Formar vai pedir a sua senha ou os seus códigos. Se você não esperava este convite, ignore este e-mail.`;
+  return {
+    assunto: 'Programa Formar: seu acesso ao portal do servidor está liberado',
+    texto,
+    html: layout({
+      titulo: 'Seu acesso ao portal está liberado',
+      preheader: 'Faça o primeiro acesso com o seu CPF e acompanhe suas formações e certificados.',
+      corpo,
+      siteUrl
+    })
+  };
+}

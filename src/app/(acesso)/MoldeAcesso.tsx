@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { MarcaFormar } from '@/components/MarcaFormar';
 import { TemaAlternar } from '@/components/TemaAlternar';
 import css from './acesso.module.css';
 
@@ -29,15 +30,9 @@ export function MoldeAcesso({
       <div className="faixa-marca" />
       <main id="conteudo" className={css.tela}>
         <section className={css.marca} aria-label="Sobre o Programa Formar">
-          <img
-            src="/marca/logo-orgao.png"
-            alt="Prefeitura de Serra Clara"
-            className={`logo ${css.logoGrande}`}
-            width={150}
-            height={63}
-          />
+          <MarcaFormar variante="empilhada" altura={84} className={css.logoGrande} />
           <div className={css.marcaTexto}>
-            <span className={css.selo}>{gestao ? 'Gestão de formações' : 'Programa Formar'}</span>
+            <span className={css.selo}>{gestao ? 'Gestão de formações' : 'Portal do servidor'}</span>
             <p className={css.chamada}>
               {gestao ? (
                 <>
@@ -55,18 +50,23 @@ export function MoldeAcesso({
                 : 'Acompanhe a frequência, baixe seus certificados e confira a autenticidade de cada um.'}
             </p>
           </div>
-          <p className="pequeno texto-3">Secretaria Municipal de Educação de Serra Clara</p>
+          <div className={css.assinaturaMarca}>
+            <img
+              src="/marca/logo-orgao.png"
+              alt="Prefeitura de Serra Clara"
+              className={`logo ${css.logoPrefeitura}`}
+              width={86}
+              height={36}
+            />
+            <p className="pequeno texto-3">Secretaria Municipal de Educação de Serra Clara</p>
+          </div>
         </section>
 
         <section className={css.form}>
           <div className={css.topoCaixa}>
-            <img
-              src="/marca/logo-orgao.png"
-              alt="Prefeitura de Serra Clara"
-              className={`logo ${css.logoMovel}`}
-              width={95}
-              height={40}
-            />
+            <span className={css.logoMovel}>
+              <MarcaFormar altura={22} />
+            </span>
             <span />
             <TemaAlternar />
           </div>

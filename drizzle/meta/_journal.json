@@ -78,6 +78,20 @@
       "when": 1795024502127,
       "tag": "0010_email_html",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795437695934,
+      "tag": "0011_conteudo_por_encontro",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795559824308,
+      "tag": "0012_convites_portal",
+      "breakpoints": true
     }
   ]
 }

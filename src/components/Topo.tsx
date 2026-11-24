@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { LogOut } from 'lucide-react';
 import { iniciais } from '@/lib/dominio/regras';
+import { MarcaFormar } from './MarcaFormar';
 import { TemaAlternar } from './TemaAlternar';
 import { NavAbas, type Aba } from './NavAbas';
 import css from './topo.module.css';
@@ -29,12 +30,18 @@ export function Topo({
       <div className="faixa-marca" />
       <div className={`container ${css.barra}`}>
         <Link href={inicio} className={css.marca}>
-          <img src="/marca/logo-orgao.png" alt="" className="logo" width={81} height={34} />
-          <span className={css.divisor} aria-hidden="true" />
           <span className={css.nomes}>
-            <strong>Programa Formar</strong>
+            <MarcaFormar altura={22} className={css.logoFormar} />
             <span>{area}</span>
           </span>
+          <span className={css.divisor} aria-hidden="true" />
+          <img
+            src="/marca/logo-orgao.png"
+            alt="Prefeitura de Serra Clara"
+            className={`logo ${css.logoPrefeitura}`}
+            width={74}
+            height={31}
+          />
         </Link>
         <div className={css.usuario}>
           <TemaAlternar />

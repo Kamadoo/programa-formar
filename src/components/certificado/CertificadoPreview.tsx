@@ -1,4 +1,4 @@
-import type { Modulo } from '@/lib/dominio/regras';
+import { horasTexto, type Modulo } from '@/lib/dominio/regras';
 import css from './certificado.module.css';
 
 export type DadosCertificado = {
@@ -20,8 +20,8 @@ export type DadosCertificado = {
 };
 
 /**
- * Prévia em HTML do certificado (A4 paisagem). O PDF oficial é gerado no servidor
- * com o mesmo layout (src/lib/pdf/certificado.ts).
+ * Prévia em HTML do certificado (A4 paisagem), no modelo oficial: a arte de fundo traz moldura, título,
+ * assinaturas eletrônicas e marca; os textos ficam nas mesmas posições do PDF (src/lib/pdf/certificado.ts).
  */
 export function CertificadoPreview({
   dados,
@@ -33,76 +33,66 @@ export function CertificadoPreview({
   rotulo?: string;
 }) {
   const d = dados;
+  // Grade do modelo: 1–3 à esquerda, 4–6 à direita; mais de 6 divide ao meio.
+  const porColuna = d.modulos.length <= 6 ? 3 : Math.ceil(d.modulos.length / 2);
+  const colunas = [d.modulos.slice(0, porColuna), d.modulos.slice(porColuna)];
   return (
     <figure
       className={css.folha}
       aria-label={rotulo ?? (lado === 'frente' ? 'Frente do certificado' : 'Verso do certificado')}
     >
-      <div className={css.moldura}>
-        {lado === 'frente' ? (
-          <div className={css.frente}>
-            <p className={css.titulo}>CERTIFICADO</p>
-            <p className={css.texto}>
-              A Prefeitura de Serra Clara, por meio da Secretaria Municipal de Educação, certifica que
-            </p>
-            <p className={css.nome}>{d.nome}</p>
-            <p className={css.texto}>
-              participou da formação “{d.formacao}”, com carga horária total de {d.cargaTotal} horas, totalizando{' '}
-              {d.cargaCumprida} horas de participação.
-            </p>
-            <p className={css.texto}>
-              {d.cidade}, {d.dataExtenso}.
-            </p>
-            <div className={css.rodape}>
-              {d.assinaturas.map(a => (
-                <div key={a.nome} className={css.assinatura}>
-                  <span>{a.nome}</span>
-                  <span>{a.cargo}</span>
-                </div>
-              ))}
-              <img src="/marca/logo-orgao.png" alt="" className={css.logo} width={120} height={50} />
-            </div>
+      <img src={`/certificado-fundo/${lado}`} alt="" className={css.fundo} width={1400} height={990} />
+      {lado === 'frente' ? (
+        <>
+          <p className={`${css.t} ${css.intro}`}>
+            A Prefeitura de Serra Clara, por meio da Secretaria Municipal de Educação, certifica que
+          </p>
+          <p className={`${css.t} ${css.nome}`}>{d.nome}</p>
+          <span className={css.linhaNome} aria-hidden="true" />
+          <p className={`${css.t} ${css.corpo}`}>
+            participou do treinamento “{d.formacao}”, realizado pela Secretaria Municipal de Educação, totalizando{' '}
+            {horasTexto(d.cargaCumprida)} horas de participação.
+          </p>
+          <p className={`${css.t} ${css.data}`}>
+            {d.cidade}, {d.dataExtenso}.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className={`${css.t} ${css.subtitulo}`}>CONTEÚDO PROGRAMÁTICO</p>
+          <p className={`${css.t} ${css.curso}`}>{d.formacao}</p>
+          <div className={css.modulos}>
+            {colunas.map((col, c) => (
+              <ol key={c} className={css.coluna} start={c * porColuna + 1}>
+                {col.map((m, i) => (
+                  <li key={i} className={porColuna > 3 ? css.moduloCompacto : css.modulo}>
+                    <strong>
+                      {c * porColuna + i + 1}. {m.titulo}
+                      {m.cargaH ? ` — ${horasTexto(m.cargaH)}h` : ''}
+                    </strong>
+                    {m.itens.length ? (
+                      <ul>
+                        {m.itens.map((it, j) => (
+                          <li key={j}>
+                            {it}
+                            {m.cargasItens?.[j] ? ` (${horasTexto(m.cargasItens[j])}h)` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            ))}
           </div>
-        ) : (
-          <div className={css.verso}>
-            <p className={css.subtitulo}>CONTEÚDO PROGRAMÁTICO</p>
-            <p className={css.curso}>{d.formacao}</p>
-            <ol className={css.modulos}>
-              {d.modulos.map((m, i) => (
-                <li key={i}>
-                  <strong>
-                    {i + 1}. {m.titulo}
-                  </strong>
-                  {m.itens.length ? (
-                    <ul>
-                      {m.itens.map((it, j) => (
-                        <li key={j}>{it}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-            <div className={css.cargas}>
-              <p>
-                Carga horária total do curso: {d.cargaTotal} horas ({d.cargaPresencial}h presenciais
-                {d.cargaEstudo ? ` + ${d.cargaEstudo}h de estudos complementares` : ''})
-              </p>
-              <p>
-                Carga horária executada: {d.presencialCumprida}h presenciais
-                {d.cargaEstudo ? ` + ${d.estudoCumprida}h de estudos complementares` : ''}
-              </p>
-              <p>
-                <strong>Carga horária total executada: {d.cargaCumprida} horas</strong>
-              </p>
-              <p className={css.codigo}>
-                Emitido eletronicamente em {d.dataEmissaoBR} · Código de validação <strong>{d.codigo}</strong> ·{' '}
-                {d.urlValidacao}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+          <p className={`${css.t} ${css.executada}`}>
+            Carga horária total executada: {horasTexto(d.cargaCumprida)} horas
+          </p>
+          <p className={`${css.t} ${css.emissao}`}>
+            Emitido eletronicamente em {d.dataEmissaoBR} · Código de validação: {d.codigo}
+          </p>
+        </>
+      )}
     </figure>
   );
 }

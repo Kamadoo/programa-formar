@@ -8,6 +8,7 @@ import { Encontros } from './Encontros';
 import { carregarFormacao } from './dados';
 import { exigirGestor } from '@/lib/auth/sessao';
 import { ExcluirFormacao } from './ExcluirFormacao';
+import { hojeISO } from '@/lib/dominio/datas';
 
 export const metadata: Metadata = { title: 'Dados da formação' };
 
@@ -45,19 +46,24 @@ export default async function DadosFormacao({ params, searchParams }: PageProps<
               local: f.local,
               cargaPresencialH: f.cargaPresencialH,
               cargaEstudoH: f.cargaEstudoH,
-              conteudoProgramatico: f.conteudoProgramatico,
               prefixoCodigo: f.prefixoCodigo
             }}
+            modulos={exemplo.modulos}
+            prefixoFixo={d.participantes.some(p => p.certificado)}
+            ano={Number((d.encontros[0]?.data ?? hojeISO()).slice(0, 4))}
           />
         </section>
         <Encontros
           admin={admin}
           formacaoId={f.id}
+          cargaPresencialH={f.cargaPresencialH}
           encontros={d.encontros.map(e => ({
             id: e.id,
             ordem: e.ordem,
             data: e.data,
             modulo: e.modulo,
+            topico: e.topico,
+            cargaH: e.cargaH == null ? null : Number(e.cargaH),
             realizado: e.realizado
           }))}
         />
@@ -85,7 +91,7 @@ export default async function DadosFormacao({ params, searchParams }: PageProps<
               ['{periodo}', 'Encontros', d.periodo],
               ['{data_emissao}', 'Último encontro ou validação', exemplo.dataEmissaoBR],
               ['{codigo_validacao}', 'Gerado na emissão', exemplo.codigo],
-              ['{conteudo_programatico}', 'Vai no verso', `${exemplo.modulos.length} módulo(s)`]
+              ['{conteudo_programatico}', 'Encontros (verso)', `${exemplo.modulos.length} módulo(s)`]
             ].map(([v, o, ex]) => (
               <div key={v}>
                 <dt>

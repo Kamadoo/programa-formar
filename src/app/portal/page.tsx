@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, CalendarClock, ChevronDown } from 'lucide-react';
 import { ChipParticipacao } from '@/components/Status';
 import { exigirServidor } from '@/lib/auth/sessao';
-import { certificadoLiberado, dataBR, minimoEncontros, primeiroNome } from '@/lib/dominio/regras';
+import { certificadoLiberado, dataBR, minimoEncontros, pctTexto, primeiroNome } from '@/lib/dominio/regras';
 import { formacoesDoServidor } from '@/lib/dominio/servico';
 import { hojeISO } from '@/lib/dominio/datas';
 import css from './portal.module.css';
@@ -94,7 +94,7 @@ export default async function MeusCursos({ searchParams }: PageProps<'/portal'>)
                       </p>
                     </div>
                     <div className={css.freq}>
-                      <p className="rotulo">Frequência · mín. 80%</p>
+                      <p className="rotulo">Frequência · mín. {pctTexto(det.freqMinima)}</p>
                       <p className={css.pct}>{eu.freqPct}%</p>
                       <progress
                         className={`barra ${eu.totalPresencas < min && det.realizados === det.totalEncontros ? 'alerta' : ''}`}
@@ -116,7 +116,8 @@ export default async function MeusCursos({ searchParams }: PageProps<'/portal'>)
                     </p>
                   ) : eu.status === 'em_conferencia' ? (
                     <p className={`${css.nota} ${css.notaAlerta}`}>
-                      Sua frequência ficou abaixo de 80%. O núcleo de formação está conferindo sua participação.
+                      Sua frequência ficou abaixo de {pctTexto(det.freqMinima)}. O núcleo de formação está conferindo
+                      sua participação.
                     </p>
                   ) : eu.status === 'recusado' ? (
                     <p className={`${css.nota} ${css.notaErro}`}>

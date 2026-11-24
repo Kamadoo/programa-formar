@@ -6,11 +6,19 @@
 export type StatusParticipacao = 'em_andamento' | 'liberado_auto' | 'em_conferencia' | 'liberado_validado' | 'recusado';
 export type StatusFormacao = 'planejada' | 'em_andamento' | 'encerrada';
 
-export const FREQ_MINIMA_PADRAO = 0.8;
+/** Frequência mínima para o certificado sair automaticamente (75%). */
+export const FREQ_MINIMA_PADRAO = 0.75;
+/** Abaixo da mínima e a partir deste piso (60%), o núcleo de formação avalia; abaixo dele, não há certificado. */
+export const FREQ_CONFERENCIA = 0.6;
+
+/** "75%" — para os textos da tela. */
+export function pctTexto(freq: number): string {
+  return `${Math.round(freq * 100)}%`;
+}
 
 /** Mínimo de encontros para atingir a frequência mínima: ceil(n × mínima). */
 export function minimoEncontros(totalEncontros: number, freqMinima = FREQ_MINIMA_PADRAO): number {
-  // Arredonda antes do ceil para evitar 10 × 0.8 = 8.000000000000002.
+  // Arredonda antes do ceil para evitar 10 × 0.7 = 7.000000000000001.
   return Math.ceil(Math.round(totalEncontros * freqMinima * 1e6) / 1e6);
 }
 
@@ -47,11 +55,23 @@ export function statusFormacao(realizados: number, totalEncontros: number): Stat
   return realizados >= totalEncontros ? 'encerrada' : 'em_andamento';
 }
 
+/** Frequência entre o piso (60%) e a mínima (75%): o núcleo de formação decide se libera. */
+export function vaiParaConferencia(
+  presencas: number,
+  totalEncontros: number,
+  freqMinima = FREQ_MINIMA_PADRAO
+): boolean {
+  return (
+    !atingiuMinima(presencas, totalEncontros, freqMinima) && atingiuMinima(presencas, totalEncontros, FREQ_CONFERENCIA)
+  );
+}
+
 /**
  * Máquina de estados da participação.
  * - Formação aberta → em_andamento (decisões anteriores são descartadas, ex.: encontro adicionado).
- * - Encerrada e frequência ≥ mínima → liberado_auto (a regra automática sempre prevalece).
- * - Encerrada e abaixo da mínima → mantém a decisão do gestor (validado/recusado) ou fica em_conferencia.
+ * - Encerrada e frequência ≥ mínima (75%) → liberado_auto (a regra automática sempre prevalece).
+ * - Encerrada e entre 60% e a mínima → mantém a decisão do gestor (validado/recusado) ou fica em_conferencia.
+ * - Encerrada e abaixo de 60% → recusado (sem certificado).
  */
 export function proximoStatus(params: {
   encerrada: boolean;
@@ -63,6 +83,7 @@ export function proximoStatus(params: {
   const { encerrada, presencas, totalEncontros, atual, freqMinima } = params;
   if (!encerrada) return 'em_andamento';
   if (atingiuMinima(presencas, totalEncontros, freqMinima)) return 'liberado_auto';
+  if (!atingiuMinima(presencas, totalEncontros, FREQ_CONFERENCIA)) return 'recusado';
   if (atual === 'liberado_validado' || atual === 'recusado') return atual;
   return 'em_conferencia';
 }
@@ -87,6 +108,31 @@ export function codigoValidacao(ano: number, prefixo: string, sequencia: number,
   let sufixo = '';
   for (let i = 0; i < 5; i++) sufixo += ALFABETO[aleatorio[i] % 32];
   return `PNL-${ano}-${prefixo}-${String(sequencia).padStart(4, '0')}-${sufixo}`;
+}
+
+/**
+ * Prefixo do código gerado a partir da formação: sigla do programa/eixo + 3 primeiras letras do nome curto.
+ * Ex.: "Compromisso Nacional Criança Alfabetizada" + "Matematica Supervisores" → CNCAMAT (código PNL-2026-CNCAMAT-0001-…).
+ * Se o programa já for uma sigla (uma palavra só, ex.: "CNCA"), ela é usada como está.
+ */
+export function prefixoCodigo(programaEixo: string, tituloCurto: string): string {
+  const palavras = (s: string) =>
+    semAcentos(s)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .split(' ')
+      .filter(Boolean);
+  const prog = palavras(programaEixo).filter(p => !PARTICULAS.has(p.toLowerCase()));
+  const sigla =
+    prog.length === 1
+      ? prog[0].slice(0, 6)
+      : prog
+          .map(p => p[0])
+          .join('')
+          .slice(0, 6);
+  const curto = palavras(tituloCurto).join('').slice(0, 3);
+  const r = (sigla + curto).slice(0, 12);
+  return r.length >= 2 ? r : (r + 'PF').slice(0, 2);
 }
 
 /** Normaliza o que a pessoa digitou na validação pública (minúsculas, espaços, O→0 etc.). */
@@ -153,7 +199,7 @@ export function mascararCpf(entrada: string): string {
 /* Conteúdo programático (1 módulo por linha, itens com "-")             */
 /* ------------------------------------------------------------------ */
 
-export type Modulo = { titulo: string; itens: string[] };
+export type Modulo = { titulo: string; itens: string[]; cargaH?: number; cargasItens?: number[] };
 
 export function parseConteudo(texto: string): Modulo[] {
   const modulos: Modulo[] = [];
@@ -170,6 +216,53 @@ export function parseConteudo(texto: string): Modulo[] {
     }
   }
   return modulos;
+}
+
+type EncontroConteudo = { modulo: string; topico: string; cargaH: number | null };
+
+/** Horas como saem no certificado: 4 → "4", 2.5 → "2,5". */
+export function horasTexto(h: number): string {
+  return (Math.round(h * 10) / 10).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+}
+
+/**
+ * Carga de cada encontro: a informada nele; sem informação, a carga presencial dividida igualmente entre os
+ * encontros que não têm carga própria.
+ */
+export function cargasEncontros(encontros: { cargaH: number | null }[], cargaPresencialH: number): number[] {
+  const definida = encontros.reduce((t, e) => t + (e.cargaH ?? 0), 0);
+  const semCarga = encontros.filter(e => e.cargaH == null).length;
+  const resto = semCarga ? Math.max(0, cargaPresencialH - definida) / semCarga : 0;
+  return encontros.map(e => e.cargaH ?? resto);
+}
+
+/**
+ * Conteúdo programático montado a partir dos encontros (verso do certificado): módulos na ordem em que aparecem,
+ * tópicos sem repetição, com a carga somada de cada um.
+ */
+export function conteudoDosEncontros(encontros: EncontroConteudo[], cargaPresencialH: number): Modulo[] {
+  const cargas = cargasEncontros(encontros, cargaPresencialH);
+  const chave = (s: string) => normalizarBusca(s);
+  const mods: (Modulo & { cargaH: number; cargasItens: number[] })[] = [];
+  encontros.forEach((e, i) => {
+    const titulo = e.modulo.trim();
+    if (!titulo) return;
+    let m = mods.find(x => chave(x.titulo) === chave(titulo));
+    if (!m) {
+      m = { titulo, itens: [], cargaH: 0, cargasItens: [] };
+      mods.push(m);
+    }
+    m.cargaH += cargas[i];
+    const t = e.topico.trim();
+    if (!t) return;
+    const j = m.itens.findIndex(x => chave(x) === chave(t));
+    if (j >= 0) m.cargasItens[j] += cargas[i];
+    else {
+      m.itens.push(t);
+      m.cargasItens.push(cargas[i]);
+    }
+  });
+  return mods;
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleAlert, CircleCheck, FileDown, Info } from 'lucide-react';
+import { FREQ_CONFERENCIA, FREQ_MINIMA_PADRAO, pctTexto } from '@/lib/dominio/regras';
 import { CertificadoPreview } from '@/components/certificado/CertificadoPreview';
 import { Decisao } from '@/components/Decisao';
 import { ChipParticipacao } from '@/components/Status';
@@ -27,13 +28,23 @@ export default async function Certificados({ params, searchParams }: PageProps<'
             <p className="aviso aviso-ok">
               <CircleCheck size={18} aria-hidden="true" />
               <span>
-                <strong>≥ 80%</strong> — certificado liberado automaticamente no portal ao encerrar a formação.
+                <strong>≥ {pctTexto(FREQ_MINIMA_PADRAO)}</strong> — certificado liberado automaticamente no portal ao
+                encerrar a formação.
               </span>
             </p>
             <p className="aviso aviso-alerta">
               <CircleAlert size={18} aria-hidden="true" />
               <span>
-                <strong>&lt; 80%</strong> — fica em conferência: o gestor valida ou recusa a emissão.
+                <strong>
+                  {pctTexto(FREQ_CONFERENCIA)} a {pctTexto(FREQ_MINIMA_PADRAO)}
+                </strong>{' '}
+                — fica pendente: o núcleo de formação avalia se libera ou não a emissão.
+              </span>
+            </p>
+            <p className="aviso aviso-erro">
+              <CircleAlert size={18} aria-hidden="true" />
+              <span>
+                <strong>&lt; {pctTexto(FREQ_CONFERENCIA)}</strong> — sem certificado (recusa automática).
               </span>
             </p>
           </div>

@@ -7,8 +7,10 @@ import { ChipParticipacao } from '@/components/Status';
 import {
   aindaPodeAtingir,
   dataCurta,
+  FREQ_CONFERENCIA,
   frequenciaPct,
   minimoEncontros,
+  pctTexto,
   type StatusParticipacao
 } from '@/lib/dominio/regras';
 import css from './presenca.module.css';
@@ -135,8 +137,9 @@ export function GradePresenca({
           F
         </span>{' '}
         falta
-        <span className={`${css.cel} ${css.agendado}`} aria-hidden="true" /> agendado · Frequência mínima: 80% dos
-        encontros ({minimoEncontros(n, freqMinima)} de {n}).
+        <span className={`${css.cel} ${css.agendado}`} aria-hidden="true" /> agendado · Certificado automático com{' '}
+        {pctTexto(freqMinima)} dos encontros ({minimoEncontros(n, freqMinima)} de {n}); de {pctTexto(FREQ_CONFERENCIA)}{' '}
+        ({minimoEncontros(n, FREQ_CONFERENCIA)} de {n}) até a mínima, o núcleo avalia.
       </p>
     </div>
   );

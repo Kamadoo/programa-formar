@@ -18,6 +18,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<'/gestao/adm
           abas={[
             { href: '/gestao/admin/gestores', rotulo: 'Contas da gestão' },
             { href: '/gestao/admin/servidores', rotulo: 'Base de servidores' },
+            { href: '/gestao/admin/convites', rotulo: 'Convites' },
             { href: '/gestao/admin/emails', rotulo: 'E-mails' },
             { href: '/gestao/admin/auditoria', rotulo: 'Auditoria' }
           ]}
