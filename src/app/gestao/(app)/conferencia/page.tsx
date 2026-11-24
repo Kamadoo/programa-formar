@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CircleCheck, ClipboardList } from 'lucide-react';
 import { Decisao } from '@/components/Decisao';
-import { dataCurta } from '@/lib/dominio/regras';
+import { dataCurta, FREQ_CONFERENCIA, FREQ_MINIMA_PADRAO, pctTexto } from '@/lib/dominio/regras';
 import { listarConferencia } from '@/lib/dominio/servico';
 import css from './conferencia.module.css';
 
@@ -17,7 +17,8 @@ export default async function Conferencia() {
           <p className="sobretitulo">Conferência</p>
           <h1 className="titulo-pagina">Certificados para conferir</h1>
           <p className="texto-3">
-            Servidores com frequência abaixo de 80% em formações encerradas. Valide para emitir ou recuse.
+            Servidores com frequência entre {pctTexto(FREQ_CONFERENCIA)} e {pctTexto(FREQ_MINIMA_PADRAO)} em formações
+            encerradas. Valide para emitir ou recuse.
           </p>
         </div>
       </div>

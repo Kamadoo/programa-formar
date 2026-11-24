@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   aindaPodeAtingir,
   atingiuMinima,
+  conteudoDosEncontros,
+  FREQ_CONFERENCIA,
+  horasTexto,
+  prefixoCodigo,
+  vaiParaConferencia,
   cargaCumprida,
   codigoValidacao,
   cpfValido,
@@ -19,11 +24,19 @@ import {
 } from '@/lib/dominio/regras';
 
 describe('frequência', () => {
-  it('mínimo de encontros = ceil(n × 0,8)', () => {
-    expect(minimoEncontros(10)).toBe(8);
-    expect(minimoEncontros(8)).toBe(7); // 6,4 → 7
-    expect(minimoEncontros(9)).toBe(8); // 7,2 → 8
-    expect(minimoEncontros(5)).toBe(4);
+  it('mínimo de encontros = ceil(n × 0,75)', () => {
+    expect(minimoEncontros(10)).toBe(8); // 7,5 → 8
+    expect(minimoEncontros(8)).toBe(6);
+    expect(minimoEncontros(9)).toBe(7); // 6,75 → 7
+    expect(minimoEncontros(4)).toBe(3);
+  });
+
+  it('piso da conferência = ceil(n × 0,6)', () => {
+    expect(minimoEncontros(10, FREQ_CONFERENCIA)).toBe(6);
+    expect(vaiParaConferencia(6, 10)).toBe(true); // 60%
+    expect(vaiParaConferencia(7, 10)).toBe(true); // 70%
+    expect(vaiParaConferencia(8, 10)).toBe(false); // 80%: automático
+    expect(vaiParaConferencia(5, 10)).toBe(false); // 50%: sem certificado
   });
 
   it('não sofre com ponto flutuante (10 × 0,8)', () => {
@@ -32,8 +45,9 @@ describe('frequência', () => {
   });
 
   it('compara por encontros, não pelo % arredondado', () => {
-    // 7 de 9 = 77,8% → arredonda 78; mínimo é 8 encontros
-    expect(atingiuMinima(7, 9)).toBe(false);
+    // 7 de 10 = 70%; 6 de 8 = 75% (exato)
+    expect(atingiuMinima(7, 10)).toBe(false);
+    expect(atingiuMinima(6, 8)).toBe(true);
     expect(atingiuMinima(8, 10)).toBe(true);
     expect(frequenciaPct(9, 10)).toBe(90);
   });
@@ -56,17 +70,25 @@ describe('máquina de estados', () => {
       'em_andamento'
     );
   });
-  it('encerrada e ≥ 80% → liberado automático', () => {
+  it('encerrada e ≥ 75% → liberado automático', () => {
     expect(proximoStatus({ encerrada: true, presencas: 8, totalEncontros: 10, atual: 'em_andamento' })).toBe(
       'liberado_auto'
     );
   });
-  it('encerrada e < 80% → em conferência', () => {
+  it('encerrada e entre 60% e 75% → em conferência', () => {
     expect(proximoStatus({ encerrada: true, presencas: 7, totalEncontros: 10, atual: 'em_andamento' })).toBe(
       'em_conferencia'
     );
   });
-  it('mantém a decisão do gestor se continuar abaixo', () => {
+  it('encerrada e abaixo de 60% → recusado (sem certificado)', () => {
+    expect(proximoStatus({ encerrada: true, presencas: 5, totalEncontros: 10, atual: 'em_andamento' })).toBe(
+      'recusado'
+    );
+    expect(proximoStatus({ encerrada: true, presencas: 5, totalEncontros: 10, atual: 'liberado_validado' })).toBe(
+      'recusado'
+    );
+  });
+  it('mantém a decisão do gestor se continuar na faixa de conferência', () => {
     expect(proximoStatus({ encerrada: true, presencas: 6, totalEncontros: 10, atual: 'recusado' })).toBe('recusado');
     expect(proximoStatus({ encerrada: true, presencas: 6, totalEncontros: 10, atual: 'liberado_validado' })).toBe(
       'liberado_validado'
@@ -104,6 +126,32 @@ describe('códigos e arquivos', () => {
   });
   it('busca sem acentos', () => {
     expect(normalizarBusca('  Antônio CARLOS ')).toBe('antonio carlos');
+  });
+});
+
+describe('prefixo e conteúdo programático', () => {
+  it('prefixo a partir do programa/eixo e do nome curto', () => {
+    expect(prefixoCodigo('Compromisso Nacional Criança Alfabetizada', 'MatematicaSupervisores')).toBe('CNCAMAT');
+    expect(prefixoCodigo('CNCA', 'Língua Portuguesa')).toBe('CNCALIN');
+    expect(prefixoCodigo('Núcleo de Apoio à Inclusão · SEMED', 'Educacao Inclusiva')).toBe('NAAISEDU');
+  });
+  it('agrupa encontros por módulo, somando a carga', () => {
+    const m = conteudoDosEncontros(
+      [
+        { modulo: 'Números', topico: 'fundamentos', cargaH: null },
+        { modulo: 'números', topico: 'Sistema decimal', cargaH: null },
+        { modulo: 'Álgebra', topico: '', cargaH: 2 },
+        { modulo: 'Números', topico: 'Fundamentos', cargaH: null }
+      ],
+      14
+    );
+    expect(m.map(x => [x.titulo, x.cargaH])).toEqual([
+      ['Números', 12],
+      ['Álgebra', 2]
+    ]);
+    expect(m[0].itens).toEqual(['fundamentos', 'Sistema decimal']);
+    expect(m[0].cargasItens).toEqual([8, 4]);
+    expect(horasTexto(2.5)).toBe('2,5');
   });
 });
 

@@ -323,7 +323,9 @@ export async function carregarFicticios(
             formacaoId: fr.id,
             ordem: i + 1,
             data: br(dt),
-            modulo: f.modulos[i],
+            // "Números · fundamentos" → módulo "Números", tópico "fundamentos".
+            modulo: f.modulos[i].split(' · ')[0].trim(),
+            topico: (f.modulos[i].split(' · ')[1] ?? '').trim(),
             realizado: i < f.realizados,
             lancadoPor: i < f.realizados ? gestorRow.id : null,
             lancadoEm: i < f.realizados ? new Date() : null

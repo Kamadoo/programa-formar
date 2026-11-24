@@ -2,7 +2,7 @@ import 'server-only';
 import type { DadosCertificado } from '@/components/certificado/CertificadoPreview';
 import { env } from '@/lib/env';
 import { hojeISO } from './datas';
-import { cargaCumprida, dataBR, dataExtenso, parseConteudo } from './regras';
+import { cargaCumprida, conteudoDosEncontros, dataBR, dataExtenso, parseConteudo } from './regras';
 import type { DetalheFormacao, LinhaParticipante } from './servico';
 
 const ASSINATURAS_PADRAO = [
@@ -29,8 +29,22 @@ export function dadosCertificado(det: DetalheFormacao, p?: LinhaParticipante | n
     dataExtenso: dataExtenso(dataIso),
     dataEmissaoBR: dataBR(dataIso),
     assinaturas: det.modelo?.assinaturas ?? ASSINATURAS_PADRAO,
-    modulos: parseConteudo(f.conteudoProgramatico),
+    modulos: modulosDaFormacao(det),
     codigo: p?.certificado?.codigo ?? `PNL-${dataIso.slice(0, 4)}-${f.prefixoCodigo}-0000-XXXXX`,
     urlValidacao: new URL('/validar', env().SITE_URL).host + '/validar'
   };
+}
+
+/** Verso do certificado: montado a partir dos encontros; o texto antigo só vale para formação sem encontros. */
+export function modulosDaFormacao(det: DetalheFormacao) {
+  const f = det.formacao;
+  if (!det.encontros.length) return parseConteudo(f.conteudoProgramatico);
+  return conteudoDosEncontros(
+    det.encontros.map(e => ({
+      modulo: e.modulo,
+      topico: e.topico,
+      cargaH: e.cargaH == null ? null : Number(e.cargaH)
+    })),
+    f.cargaPresencialH
+  );
 }

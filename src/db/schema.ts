@@ -216,7 +216,8 @@ export const formacao = pgTable(
     local: text('local').notNull(),
     cargaPresencialH: integer('carga_presencial_h').notNull(),
     cargaEstudoH: integer('carga_estudo_h').notNull().default(0),
-    freqMinima: numeric('freq_minima', { precision: 3, scale: 2 }).notNull().default('0.80'),
+    freqMinima: numeric('freq_minima', { precision: 3, scale: 2 }).notNull().default('0.75'),
+    // Legado: o verso do certificado agora é montado a partir dos encontros (módulo, tópico e carga).
     conteudoProgramatico: text('conteudo_programatico').notNull().default(''),
     prefixoCodigo: text('prefixo_codigo').notNull(),
     modeloCertificadoId: uuid('modelo_certificado_id').references(() => modeloCertificado.id),
@@ -241,6 +242,9 @@ export const encontro = pgTable(
     ordem: integer('ordem').notNull(),
     data: date('data').notNull(),
     modulo: text('modulo').notNull(),
+    topico: text('topico').notNull().default(''),
+    // Horas do encontro; vazio = carga presencial dividida igualmente entre os encontros sem carga própria.
+    cargaH: numeric('carga_h', { precision: 5, scale: 1 }),
     realizado: boolean('realizado').notNull().default(false),
     lancadoPor: uuid('lancado_por').references(() => gestor.id),
     lancadoEm: timestamp('lancado_em', { withTimezone: true })
@@ -354,3 +358,23 @@ export const emailSaida = pgTable('email_saida', {
   desistiuEm: timestamp('desistiu_em', { withTimezone: true }), // depois de várias falhas seguidas
   idProvedor: text('id_provedor') // MessageId do SES, para rastrear
 });
+
+/**
+ * Convites de primeiro acesso ao portal, enviados pela administração em lote.
+ * Uma linha por envio. A situação vem do e-mail na fila (email_saida); quando o e-mail
+ * já saiu da fila (limpeza da LGPD), o convite conta como enviado.
+ */
+export const conviteServidor = pgTable(
+  'convite_servidor',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    servidorId: uuid('servidor_id')
+      .notNull()
+      .references(() => servidor.id, { onDelete: 'cascade' }),
+    enviadoPor: uuid('enviado_por').references(() => gestor.id, { onDelete: 'set null' }),
+    emailId: uuid('email_id'), // sem chave estrangeira: a fila é limpa depois de 30/90 dias
+    reenvio: boolean('reenvio').notNull().default(false),
+    criadoEm: criadoEm()
+  },
+  t => [index('convite_servidor_idx').on(t.servidorId, t.criadoEm)]
+);

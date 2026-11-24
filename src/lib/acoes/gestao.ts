@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { falha, sucesso, type Resultado } from '@/lib/acao';
 import { exigirAdmin, exigirGestor } from '@/lib/auth/sessao';
 import { hashCpf } from '@/lib/cripto';
-import { dataBR, somenteDigitos } from '@/lib/dominio/regras';
+import { dataBR, prefixoCodigo, somenteDigitos } from '@/lib/dominio/regras';
 import {
   adicionarEncontro,
   atualizarFormacao,
@@ -64,13 +64,7 @@ const esquemaFormacao = z.object({
   formador: texto(160, 'o(a) formador(a)'),
   local: texto(160, 'o local'),
   cargaPresencialH: horas,
-  cargaEstudoH: horas,
-  conteudoProgramatico: z.string().max(6000, 'Conteúdo muito longo.').default(''),
-  prefixoCodigo: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z0-9]{2,12}$/, 'De 2 a 12 letras ou números, sem espaços.')
+  cargaEstudoH: horas
 });
 
 export async function salvarFormacao(_: Resultado, form: FormData): Promise<Resultado> {
@@ -85,17 +79,19 @@ export async function salvarFormacao(_: Resultado, form: FormData): Promise<Resu
   if (p.data.cargaPresencialH + p.data.cargaEstudoH === 0) {
     return falha('A carga total precisa ser maior que zero.', { cargaPresencialH: 'Informe a carga horária.' });
   }
+  // Prefixo do código gerado a partir do programa/eixo e do nome curto (raiz sempre PNL-<ano>).
+  const dados = { ...p.data, prefixoCodigo: prefixoCodigo(p.data.programaEixo, p.data.tituloCurto) };
   if (typeof id === 'string' && id) {
     if (!uuid.safeParse(id).success) return falha('Formação inválida.');
     return tratar(async () => {
-      await atualizarFormacao(id, p.data, g.id);
+      await atualizarFormacao(id, dados, g.id);
       revalidarFormacao(id);
       return sucesso('Formação salva.');
     });
   }
   let novoId = '';
   const r = await tratar(async () => {
-    novoId = await criarFormacao(p.data, g.id);
+    novoId = await criarFormacao(dados, g.id);
     return sucesso('Formação criada.');
   });
   if (!r?.ok) return r;
@@ -106,7 +102,17 @@ export async function salvarFormacao(_: Resultado, form: FormData): Promise<Resu
 const esquemaEncontro = z.object({
   formacaoId: uuid,
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data.'),
-  modulo: texto(160, 'o módulo')
+  modulo: texto(120, 'o módulo'),
+  topico: z.string().trim().max(160, 'Use no máximo 160 caracteres.').default(''),
+  cargaH: z.preprocess(
+    v => (typeof v === 'string' && v.trim() === '' ? null : typeof v === 'string' ? v.replace(',', '.') : v),
+    z.coerce
+      .number({ message: 'Informe um número.' })
+      .min(0.5, 'Mínimo de 0,5 h.')
+      .max(99, 'Valor muito alto.')
+      .refine(n => Number.isInteger(n * 2), 'Use horas inteiras ou meias horas (ex.: 2,5).')
+      .nullable()
+  )
 });
 
 export async function novoEncontro(_: Resultado, form: FormData): Promise<Resultado> {
@@ -115,10 +121,11 @@ export async function novoEncontro(_: Resultado, form: FormData): Promise<Result
   if (!p.success) {
     const erros: Record<string, string> = {};
     for (const i of p.error.issues) erros[String(i.path[0])] ??= i.message;
-    return falha('Confira a data e o módulo.', erros);
+    return falha('Confira os campos do encontro.', erros);
   }
   return tratar(async () => {
-    await adicionarEncontro(p.data.formacaoId, p.data.data, p.data.modulo, g.id);
+    const { formacaoId, ...enc } = p.data;
+    await adicionarEncontro(formacaoId, enc, g.id);
     revalidarFormacao(p.data.formacaoId);
     return sucesso(`Encontro de ${dataBR(p.data.data)} adicionado.`);
   });
@@ -238,9 +245,10 @@ export async function alterarEncontro(_: Resultado, form: FormData): Promise<Res
   const g = await exigirGestor();
   const ids = z.object({ formacaoId: uuid, encontroId: uuid }).safeParse(Object.fromEntries(form));
   const p = esquemaEncontro.safeParse(Object.fromEntries(form));
-  if (!ids.success || !p.success) return falha('Confira a data e o módulo.');
+  if (!ids.success || !p.success) return falha(p.error?.issues[0]?.message ?? 'Confira os campos do encontro.');
   return tratar(async () => {
-    await editarEncontro(ids.data.formacaoId, ids.data.encontroId, p.data.data, p.data.modulo, g);
+    const { data, modulo, topico, cargaH } = p.data;
+    await editarEncontro(ids.data.formacaoId, ids.data.encontroId, { data, modulo, topico, cargaH }, g);
     revalidarFormacao(ids.data.formacaoId);
     return sucesso('Encontro atualizado.');
   });

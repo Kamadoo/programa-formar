@@ -35,8 +35,21 @@
 .logoGrande {
   /* Sem isso o flex em coluna estica a imagem até a largura do painel. */
   align-self: flex-start;
-  height: 52px;
+  height: clamp(64px, 7vw, 84px);
   width: auto;
+}
+.assinaturaMarca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.assinaturaMarca p {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 1px solid var(--borda-forte);
+}
+.logoPrefeitura {
+  height: 36px;
 }
 .marcaTexto {
   display: flex;

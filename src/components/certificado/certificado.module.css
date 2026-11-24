@@ -1,137 +1,146 @@
-/* A4 paisagem (297 × 210). Medidas em cqw para escalar com a largura. */
+/*
+ * A4 paisagem no modelo oficial. Medidas do slide original (1440 × 1018,5 pt) convertidas em cqw:
+ * 1cqw = 14,4 pt do modelo. Mesmas posições do PDF (src/lib/pdf/certificado.ts).
+ */
 .folha {
+  position: relative;
   margin: 0;
   container-type: inline-size;
-  aspect-ratio: 297 / 210;
+  aspect-ratio: 1440 / 1018.5;
   width: 100%;
   background: #fff;
-  color: #1d1d1f;
+  color: #231f20;
   border-radius: 6px;
   box-shadow: 0 10px 30px rgb(20 36 43 / 0.12);
   border: 1px solid var(--borda);
   overflow: hidden;
-  font-family: var(--fonte);
+  font-family: 'Arimo', Arial, sans-serif;
 }
-.moldura {
+.fundo {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  max-width: none;
 }
-.folha {
-  position: relative;
+.t {
+  position: absolute;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
-.moldura {
-  margin: 3cqw;
-  border: 0.55cqw solid #e5157f;
-  border-radius: 1.4cqw;
-  outline: 0.18cqw solid #e5157f;
-  outline-offset: -1.3cqw;
-  padding: 4.2cqw 6cqw 3.4cqw;
-  display: flex;
-}
-.frente,
-.verso {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.frente {
-  align-items: center;
+.intro,
+.corpo,
+.data,
+.nome {
   text-align: center;
-  gap: 1.6cqw;
+  font-size: 1.5104cqw;
+  line-height: 1.974;
+  left: 12.85cqw;
+  width: 72.85cqw;
 }
-.titulo {
-  font-size: 5.6cqw;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  color: #2b2b2b;
-  margin-bottom: 1.2cqw;
-}
-.texto {
-  font-size: 1.75cqw;
-  line-height: 1.55;
-  max-width: 82%;
+.intro {
+  top: 21.2cqw;
 }
 .nome {
-  font-size: 2.9cqw;
-  font-weight: 800;
-  padding: 0 4cqw 0.8cqw;
-  border-bottom: 0.12cqw solid #a8a8a8;
-  min-width: 60%;
-}
-.rodape {
-  margin-top: auto;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2cqw;
-}
-.assinatura {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2cqw;
-  min-width: 24%;
-  padding-top: 0.6cqw;
-  border-top: 0.12cqw solid #555;
-  font-size: 1.2cqw;
-  line-height: 1.3;
-}
-.assinatura span:first-child {
+  top: 27.16cqw;
+  left: 12.09cqw;
+  width: 74.36cqw;
+  font-size: 1.7708cqw;
+  line-height: 1.2;
   font-weight: 700;
 }
-.logo {
-  width: 15cqw;
-  height: auto;
+.linhaNome {
+  position: absolute;
+  top: 29.375cqw;
+  left: 15.47cqw;
+  width: 67.6cqw;
+  height: max(1px, 0.052cqw);
+  background: #231f20;
+}
+.corpo {
+  top: 32.66cqw;
+}
+.data {
+  top: 41.92cqw;
+  line-height: 1.2;
+  left: 10.37cqw;
+  width: 77.8cqw;
+}
+.subtitulo,
+.curso {
+  left: 6.06cqw;
+  width: 87.89cqw;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.2;
 }
 .subtitulo {
-  text-align: center;
-  font-size: 2.9cqw;
-  font-weight: 900;
-  color: #2b2b2b;
-  letter-spacing: 0.02em;
+  top: 11.44cqw;
+  font-size: 2.5cqw;
 }
 .curso {
-  text-align: center;
-  font-size: 2cqw;
-  font-weight: 800;
-  color: #e5157f;
-  margin-top: 1.2cqw;
-  padding-bottom: 1cqw;
-  border-bottom: 0.25cqw solid #e5157f;
-  align-self: center;
+  top: 16.71cqw;
+  font-size: 1.5104cqw;
+  color: #fd0081;
+}
+.curso::after {
+  content: '';
+  display: block;
+  width: 17.19cqw;
+  height: 0.156cqw;
+  margin: 2.05cqw auto 0;
+  background: #fd0081;
 }
 .modulos {
-  list-style: none;
-  margin: 2cqw 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  max-height: 27cqw;
-  gap: 0.9cqw 4cqw;
-  font-size: 1.45cqw;
-  line-height: 1.45;
+  position: absolute;
+  top: 22.76cqw;
+  left: 12.79cqw;
+  width: 78.3cqw;
+  height: 39.1cqw;
+  display: grid;
+  grid-template-columns: 39.07cqw 39.07cqw;
   overflow: hidden;
 }
-.modulos > li > strong {
-  color: #e5157f;
-  font-size: 1.6cqw;
+.coluna {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.modulos ul {
-  margin: 0.2cqw 0 0;
-  padding-left: 2.6cqw;
+.modulo,
+.moduloCompacto {
+  font-size: 0.9896cqw;
+  line-height: 1.9cqw;
 }
-.cargas {
-  margin-top: auto;
-  font-size: 1.15cqw;
-  line-height: 1.6;
+.modulo {
+  min-height: 13.3cqw;
 }
-.codigo {
-  color: #6b6b6b;
-  margin-top: 0.4cqw;
+.moduloCompacto {
+  margin-bottom: 1cqw;
 }
-.codigo strong {
-  font-family: var(--mono);
-  color: #2b2b2b;
+.modulo strong,
+.moduloCompacto strong {
+  display: block;
+  color: #fd0081;
+  font-size: 1.198cqw;
+}
+.coluna ul {
+  margin: 0;
+  padding-left: 1.56cqw;
+  list-style: '• ';
+}
+.executada {
+  top: 63.35cqw;
+  left: 12.79cqw;
+  font-size: 1.198cqw;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.emissao {
+  top: 63.58cqw;
+  left: 55.07cqw;
+  width: 35.7cqw;
+  font-size: 0.78cqw;
+  line-height: 1.2;
+  color: #6e6a6b;
 }

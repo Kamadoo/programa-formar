@@ -5,7 +5,7 @@ import { desc } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { dataHoraBR } from '@/lib/dominio/datas';
 import { env } from '@/lib/env';
-import { emailCodigo, emailSenhaAlterada, htmlDeTexto } from '@/lib/email-modelos';
+import { emailCodigo, emailConvite, emailSenhaAlterada, htmlDeTexto } from '@/lib/email-modelos';
 
 export const metadata: Metadata = { title: 'Caixa de saída (dev)' };
 
@@ -44,6 +44,7 @@ export default async function Emails({ searchParams }: PageProps<'/dev/emails'>)
     const ex = [
       emailCodigo({ nome: 'Maria', codigo: '387366', finalidade: 'primeiro_acesso', minutos: 10, siteUrl: site }),
       emailCodigo({ nome: 'Maria', codigo: '512904', finalidade: 'redefinir_senha', minutos: 10, siteUrl: site }),
+      emailConvite({ nome: 'Maria', siteUrl: site }),
       emailSenhaAlterada({ nome: 'Maria', quando: new Date(), siteUrl: site, area: 'portal' }),
       (() => {
         const texto =

@@ -3,6 +3,14 @@
 import { useActionState, useEffect, useState } from 'react';
 import { Save } from 'lucide-react';
 import { salvarFormacao } from '@/lib/acoes/gestao';
+import {
+  FREQ_CONFERENCIA,
+  FREQ_MINIMA_PADRAO,
+  horasTexto,
+  pctTexto,
+  prefixoCodigo,
+  type Modulo
+} from '@/lib/dominio/regras';
 import { BotaoEnviar } from '@/components/FormAcao';
 import { Toast } from '@/components/Toast';
 import { apagarRascunho, useRascunho } from '@/components/useRascunho';
@@ -16,7 +24,6 @@ export type ValoresFormacao = {
   local: string;
   cargaPresencialH: number;
   cargaEstudoH: number;
-  conteudoProgramatico: string;
   prefixoCodigo: string;
 };
 
@@ -57,11 +64,19 @@ function Campo({
 export function FormFormacao({
   valores,
   periodo,
-  recemCriada
+  recemCriada,
+  modulos,
+  prefixoFixo,
+  ano
 }: {
   valores?: ValoresFormacao;
   periodo?: string;
   recemCriada?: boolean;
+  /** Conteúdo programático montado a partir dos encontros (só leitura). */
+  modulos?: Modulo[];
+  /** Já há certificado emitido: o prefixo não muda mais. */
+  prefixoFixo?: boolean;
+  ano: number;
 }) {
   const [r, enviar] = useActionState(salvarFormacao, null);
   // O que foi digitado fica guardado nesta aba até salvar com sucesso.
@@ -74,11 +89,21 @@ export function FormFormacao({
   }, [recemCriada]);
   const [pres, setPres] = useState(valores?.cargaPresencialH ?? 0);
   const [est, setEst] = useState(valores?.cargaEstudoH ?? 0);
+  const [prog, setProg] = useState(valores?.programaEixo ?? '');
+  const [curto, setCurto] = useState(valores?.tituloCurto ?? '');
+  const prefixo =
+    prefixoFixo && valores ? valores.prefixoCodigo : prog.trim() && curto.trim() ? prefixoCodigo(prog, curto) : null;
+  // Lê os campos do próprio formulário (também depois que o rascunho é restaurado).
+  const aoDigitar = (ev: React.FormEvent<HTMLFormElement>) => {
+    const f = ev.currentTarget.elements;
+    setProg((f.namedItem('programaEixo') as HTMLInputElement | null)?.value ?? '');
+    setCurto((f.namedItem('tituloCurto') as HTMLInputElement | null)?.value ?? '');
+  };
   const e = r?.erros ?? {};
   const v = valores;
 
   return (
-    <form ref={ref} action={enviar} className="pilha g18" noValidate>
+    <form ref={ref} action={enviar} className="pilha g18" noValidate onInput={aoDigitar}>
       {v?.id ? <input type="hidden" name="id" value={v.id} /> : null}
       <div className="grade-form">
         <Campo nome="titulo" rotulo="Nome da formação (como sai no certificado)" erro={e.titulo}>
@@ -168,42 +193,63 @@ export function FormFormacao({
         </Campo>
         <Campo
           nome="prefixoCodigo"
-          rotulo="Prefixo do código"
-          erro={e.prefixoCodigo}
-          dica="Ex.: CNCAMAT → PNL-2026-CNCAMAT-0001"
+          rotulo="Código de validação"
+          dica={
+            prefixoFixo
+              ? 'Já há certificados emitidos: a raiz do código não muda mais.'
+              : 'Gerado pelo programa/eixo e pelo nome curto. Raiz sempre PNL-ano.'
+          }
           className="c3"
         >
           {p => (
             <input
               {...p}
-              name="prefixoCodigo"
               className="entrada mono"
-              defaultValue={v?.prefixoCodigo}
-              maxLength={12}
-              autoCapitalize="characters"
-              required
+              value={prefixo ? `PNL-${ano}-${prefixo}-0001` : 'Preencha programa e nome curto'}
+              readOnly
+              tabIndex={-1}
             />
           )}
         </Campo>
-        <Campo
-          nome="conteudoProgramatico"
-          rotulo="Conteúdo programático (verso do certificado)"
-          erro={e.conteudoProgramatico}
-          dica='Um módulo por linha; itens do módulo começam com "-".'
-        >
-          {p => (
-            <textarea
-              {...p}
-              name="conteudoProgramatico"
-              className="entrada"
-              defaultValue={v?.conteudoProgramatico}
-              maxLength={6000}
-              rows={9}
-            />
+        <div className="campo c6">
+          <span className="rotulo-campo" id="t-conteudo">
+            Conteúdo programático (verso do certificado)
+          </span>
+          {modulos?.length ? (
+            <ol className="conteudo-gerado" aria-labelledby="t-conteudo">
+              {modulos.map((m, i) => (
+                <li key={i}>
+                  <strong>
+                    {i + 1}. {m.titulo}
+                    {m.cargaH ? ` — ${horasTexto(m.cargaH)}h` : ''}
+                  </strong>
+                  {m.itens.length ? (
+                    <ul>
+                      {m.itens.map((it, j) => (
+                        <li key={j}>
+                          {it}
+                          {m.cargasItens?.[j] ? ` (${horasTexto(m.cargasItens[j])}h)` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="conteudo-gerado texto-3">
+              {v?.id ? 'Adicione os encontros abaixo.' : 'Salve a formação e adicione os encontros.'}
+            </p>
           )}
-        </Campo>
+          <span className="dica">
+            Montado automaticamente a partir dos encontros (módulo, tópico e carga). Para mudar, edite os encontros.
+          </span>
+        </div>
       </div>
-      <p className="dica">Frequência mínima para o certificado: 80% dos encontros.</p>
+      <p className="dica">
+        Certificado automático com frequência a partir de {pctTexto(FREQ_MINIMA_PADRAO)}; entre{' '}
+        {pctTexto(FREQ_CONFERENCIA)} e {pctTexto(FREQ_MINIMA_PADRAO)}, o núcleo de formação avalia.
+      </p>
       <div className="linha">
         <BotaoEnviar rotuloCarregando="Salvando…">
           <Save size={17} aria-hidden="true" /> {v?.id ? 'Salvar formação' : 'Criar formação'}

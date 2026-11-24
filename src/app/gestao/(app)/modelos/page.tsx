@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { CertificadoPreview, type DadosCertificado } from '@/components/certificado/CertificadoPreview';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
-import { dataBR, dataExtenso, parseConteudo } from '@/lib/dominio/regras';
+import { conteudoDosEncontros, dataBR, dataExtenso } from '@/lib/dominio/regras';
 import { hojeISO } from '@/lib/dominio/datas';
 
 export const metadata: Metadata = { title: 'Modelos' };
@@ -22,8 +22,9 @@ export default async function Modelos() {
         </div>
       </div>
       <p className="aviso">
-        <Info size={18} aria-hidden="true" /> A arte oficial (fundo e assinaturas digitalizadas) entra no modelo quando
-        a SEMED enviar os arquivos em alta resolução.
+        <Info size={18} aria-hidden="true" /> Arte de demonstração (genérica). Na implantação, a arte oficial traz a
+        moldura e as assinaturas eletrônicas das autoridades. O verso é montado a partir dos encontros da formação
+        (módulo, tópico e carga horária).
       </p>
       {modelos.map(m => {
         const exemplo: DadosCertificado = {
@@ -39,7 +40,15 @@ export default async function Modelos() {
           dataExtenso: dataExtenso(hoje),
           dataEmissaoBR: dataBR(hoje),
           assinaturas: m.assinaturas,
-          modulos: parseConteudo('Módulo 1\n- Primeiro tema\n- Segundo tema\nMódulo 2\n- Terceiro tema\nMódulo 3'),
+          modulos: conteudoDosEncontros(
+            [
+              { modulo: 'Módulo 1', topico: 'Primeiro tema', cargaH: null },
+              { modulo: 'Módulo 1', topico: 'Segundo tema', cargaH: null },
+              { modulo: 'Módulo 2', topico: 'Terceiro tema', cargaH: null },
+              { modulo: 'Módulo 3', topico: '', cargaH: null }
+            ],
+            40
+          ),
           codigo: `PNL-${hoje.slice(0, 4)}-PREFIXO-0001-XXXXX`,
           urlValidacao: new URL(env().SITE_URL).host + '/validar'
         };
@@ -60,18 +69,6 @@ export default async function Modelos() {
                 <p className="rotulo">Verso</p>
                 <CertificadoPreview dados={exemplo} lado="verso" />
               </div>
-            </div>
-            <div className="cartao-corpo borda-topo">
-              <dl className="lista-dados">
-                {m.assinaturas.map((a, i) => (
-                  <div key={i}>
-                    <dt>Assinatura {i + 1}</dt>
-                    <dd>
-                      {a.nome} <span className="texto-3 pequeno">· {a.cargo}</span>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
             </div>
           </section>
         );

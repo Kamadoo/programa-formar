@@ -6,11 +6,14 @@ import { auditar } from '@/lib/auditoria';
 import { enfileirarEmail, link } from '@/lib/email';
 import { hojeISO } from './datas';
 import {
+  atingiuMinima,
   cargaCumprida,
   certificadoLiberado,
   codigoValidacao,
   dataBR,
+  FREQ_CONFERENCIA,
   frequenciaPct,
+  pctTexto,
   periodo,
   primeiroNome,
   proximoStatus,
@@ -253,7 +256,6 @@ export type DadosFormacao = {
   local: string;
   cargaPresencialH: number;
   cargaEstudoH: number;
-  conteudoProgramatico: string;
   prefixoCodigo: string;
 };
 
@@ -287,9 +289,17 @@ export async function criarFormacao(dados: DadosFormacao, gestorId: string) {
 export async function atualizarFormacao(id: string, dados: DadosFormacao, gestorId: string) {
   const d = await db();
   await d.transaction(async tx => {
+    // Depois do primeiro certificado o prefixo não muda: os códigos já emitidos seguem a mesma raiz.
+    const [emitido] = await tx
+      .select({ id: s.certificado.id })
+      .from(s.certificado)
+      .innerJoin(s.participacao, eq(s.participacao.id, s.certificado.participacaoId))
+      .where(eq(s.participacao.formacaoId, id))
+      .limit(1);
+    const { prefixoCodigo, ...resto } = dados;
     const r = await tx
       .update(s.formacao)
-      .set({ ...dados, atualizadoEm: new Date() })
+      .set({ ...resto, ...(emitido ? {} : { prefixoCodigo }), atualizadoEm: new Date() })
       .where(eq(s.formacao.id, id))
       .returning({ id: s.formacao.id });
     if (!r.length) throw new ErroNegocio('Formação não encontrada.');
@@ -297,7 +307,13 @@ export async function atualizarFormacao(id: string, dados: DadosFormacao, gestor
   });
 }
 
-export async function adicionarEncontro(formacaoId: string, data: string, modulo: string, gestorId: string) {
+export type DadosEncontro = { data: string; modulo: string; topico: string; cargaH: number | null };
+
+export async function adicionarEncontro(
+  formacaoId: string,
+  { data, modulo, topico, cargaH }: DadosEncontro,
+  gestorId: string
+) {
   const d = await db();
   await d.transaction(async tx => {
     await travarFormacao(tx, formacaoId);
@@ -315,7 +331,14 @@ export async function adicionarEncontro(formacaoId: string, data: string, modulo
       throw new ErroNegocio('A data precisa ser igual ou posterior ao último encontro.');
     const [e] = await tx
       .insert(s.encontro)
-      .values({ formacaoId, ordem: (m?.max ?? 0) + 1, data, modulo })
+      .values({
+        formacaoId,
+        ordem: (m?.max ?? 0) + 1,
+        data,
+        modulo,
+        topico,
+        cargaH: cargaH == null ? null : String(cargaH)
+      })
       .returning({ id: s.encontro.id });
     await auditar(
       {
@@ -623,19 +646,26 @@ export async function recalcular(tx: Tx, formacaoId: string, atorId: string | nu
             )
         )[0].n
       : 0;
-    const novo = proximoStatus({
-      encerrada,
-      presencas: presentes,
-      totalEncontros: n,
-      atual: p.status,
-      freqMinima: freqMin
-    });
+    // Recusa automática (abaixo de 60%, sem gestor) não é decisão do núcleo: se a presença for corrigida, reavalia.
+    const atual = p.status === 'recusado' && !p.decididoPor ? 'em_conferencia' : p.status;
+    const novo = proximoStatus({ encerrada, presencas: presentes, totalEncontros: n, atual, freqMinima: freqMin });
     if (novo !== p.status) {
       const limparDecisao = novo === 'em_andamento' || novo === 'em_conferencia' || novo === 'liberado_auto';
+      // Abaixo do piso de conferência (60%) a recusa é automática, sem decisão do núcleo.
+      const recusaAutomatica = novo === 'recusado' && !atingiuMinima(presentes, n, FREQ_CONFERENCIA);
       await tx
         .update(s.participacao)
         .set(
-          limparDecisao ? { status: novo, decididoPor: null, decididoEm: null, motivoRecusa: null } : { status: novo }
+          recusaAutomatica
+            ? {
+                status: novo,
+                decididoPor: null,
+                decididoEm: new Date(),
+                motivoRecusa: `Frequência abaixo de ${pctTexto(FREQ_CONFERENCIA)} dos encontros.`
+              }
+            : limparDecisao
+              ? { status: novo, decididoPor: null, decididoEm: null, motivoRecusa: null }
+              : { status: novo }
         )
         .where(eq(s.participacao.id, p.id));
       await auditar(
@@ -808,8 +838,7 @@ export async function validarCodigoPublico(codigo: string) {
 export async function editarEncontro(
   formacaoId: string,
   encontroId: string,
-  data: string,
-  modulo: string,
+  { data, modulo, topico, cargaH }: DadosEncontro,
   gestor: { id: string; perfil: 'gestor_nucleo' | 'admin' }
 ) {
   const d = await db();
@@ -834,7 +863,8 @@ export async function editarEncontro(
         `A data não pode ser posterior ao encontro E${encs[i + 1].ordem} (${dataBR(encs[i + 1].data)}).`
       );
     if (e.realizado && data > hojeISO()) throw new ErroNegocio('Um encontro já realizado não pode ter data futura.');
-    await tx.update(s.encontro).set({ data, modulo }).where(eq(s.encontro.id, encontroId));
+    const carga = cargaH == null ? null : String(cargaH);
+    await tx.update(s.encontro).set({ data, modulo, topico, cargaH: carga }).where(eq(s.encontro.id, encontroId));
     await auditar(
       {
         atorTipo: 'gestor',
@@ -842,7 +872,11 @@ export async function editarEncontro(
         acao: 'editar_encontro',
         entidade: 'formacao',
         entidadeId: formacaoId,
-        detalhes: { ordem: e.ordem, de: { data: e.data, modulo: e.modulo }, para: { data, modulo } }
+        detalhes: {
+          ordem: e.ordem,
+          de: { data: e.data, modulo: e.modulo, topico: e.topico, cargaH: e.cargaH },
+          para: { data, modulo, topico, cargaH: carga }
+        }
       },
       tx
     );

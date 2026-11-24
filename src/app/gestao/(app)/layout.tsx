@@ -22,6 +22,7 @@ export default async function LayoutGestao({ children }: LayoutProps<'/gestao'>)
           { href: '/gestao/formacoes', rotulo: 'Formações' },
           { href: '/gestao/conferencia', rotulo: 'Conferência', contador: pendentes, alerta: true },
           { href: '/gestao/modelos', rotulo: 'Modelos' },
+          { href: '/gestao/relatorios', rotulo: 'Relatórios' },
           ...(g.perfil === 'admin' ? [{ href: '/gestao/admin', rotulo: 'Administração' }] : [])
         ]}
       />

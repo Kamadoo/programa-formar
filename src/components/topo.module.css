@@ -33,8 +33,15 @@
 .nomes {
   display: flex;
   flex-direction: column;
+  gap: 5px;
   line-height: 1.25;
   min-width: 0;
+}
+.logoFormar {
+  height: 22px;
+}
+.logoPrefeitura {
+  height: 31px;
 }
 .nomes strong {
   font-size: 15.5px;
@@ -154,6 +161,7 @@
 @media (max-width: 720px) {
   .quem,
   .divisor,
+  .logoPrefeitura,
   .textoSair {
     display: none;
   }
@@ -162,7 +170,10 @@
   }
 }
 @media (max-width: 420px) {
-  .marca img {
+  .logoFormar {
+    height: 18px;
+  }
+  .nomes span {
     display: none;
   }
 }
