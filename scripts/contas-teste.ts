@@ -65,6 +65,7 @@ async function criar() {
       senhaHash: await gerarHashSenha(senhaGestor),
       perfil: 'gestor_nucleo',
       senhaAlteradaEm: new Date(),
+      primeiroAcessoEm: new Date(),
       testeAte: ate
     })
     .returning({ id: s.gestor.id });

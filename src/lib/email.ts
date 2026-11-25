@@ -46,9 +46,17 @@ export async function enfileirarCodigo(
   codigo: string,
   finalidade: Finalidade,
   minutos: number,
-  tx?: Tx
+  tx?: Tx,
+  area: 'portal' | 'gestao' = 'portal'
 ) {
-  const m = emailCodigo({ nome: primeiroNome(nomeCompleto), codigo, finalidade, minutos, siteUrl: env().SITE_URL });
+  const m = emailCodigo({
+    nome: primeiroNome(nomeCompleto),
+    codigo,
+    finalidade,
+    minutos,
+    siteUrl: env().SITE_URL,
+    area
+  });
   await enfileirarEmail(para, m.assunto, m.texto, tx, m.html);
 }
 

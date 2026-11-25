@@ -3,14 +3,16 @@
 import { useActionState, useState } from 'react';
 import { ArrowRight, MailCheck, Send } from 'lucide-react';
 import { confirmarPrimeiroAcesso, pedirCodigoPrimeiroAcesso } from '@/lib/acoes/portal-acesso';
+import { confirmarPrimeiroAcessoGestor, pedirCodigoPrimeiroAcessoGestor } from '@/lib/acoes/gestao-acesso';
 import { BotaoEnviar } from '@/components/FormAcao';
-import { CampoCodigoEmail, CampoCpf } from '../Campos';
+import { CampoCodigoEmail, CampoCpf, CampoDocumento } from '../Campos';
 
-/** Passo 1: CPF → código no e-mail institucional → confere o código. */
-export function FormPrimeiroAcesso() {
+/** Passo 1: CPF (portal) ou CPF/CNPJ (gestão) → código no e-mail → confere o código. */
+export function FormPrimeiroAcesso({ gestao = false }: { gestao?: boolean }) {
+  const nome = gestao ? 'documento' : 'cpf';
   const [cpf, setCpf] = useState('');
-  const [pedido, pedir] = useActionState(pedirCodigoPrimeiroAcesso, null);
-  const [conf, confirmar] = useActionState(confirmarPrimeiroAcesso, null);
+  const [pedido, pedir] = useActionState(gestao ? pedirCodigoPrimeiroAcessoGestor : pedirCodigoPrimeiroAcesso, null);
+  const [conf, confirmar] = useActionState(gestao ? confirmarPrimeiroAcessoGestor : confirmarPrimeiroAcesso, null);
   const [corrigindo, setCorrigindo] = useState(false);
   const enviado = pedido?.ok && !corrigindo;
 
@@ -19,14 +21,18 @@ export function FormPrimeiroAcesso() {
     return (
       <form
         action={f => {
-          setCpf(String(f.get('cpf') ?? ''));
+          setCpf(String(f.get(nome) ?? ''));
           setCorrigindo(false);
           return pedir(f);
         }}
         className="pilha g18"
         noValidate
       >
-        <CampoCpf erro={pedido?.erros?.cpf ?? null} defaultValue={cpf} />
+        {gestao ? (
+          <CampoDocumento erro={pedido?.erros?.documento ?? null} defaultValue={cpf} />
+        ) : (
+          <CampoCpf erro={pedido?.erros?.cpf ?? null} defaultValue={cpf} />
+        )}
         {erro && !pedido?.erros ? (
           <p className="aviso aviso-erro" role="alert">
             {erro}
@@ -46,7 +52,7 @@ export function FormPrimeiroAcesso() {
         <MailCheck size={18} aria-hidden="true" /> {pedido.mensagem}
       </p>
       <form action={confirmar} className="pilha g18" noValidate>
-        <input type="hidden" name="cpf" value={cpf} />
+        <input type="hidden" name={nome} value={cpf} />
         <CampoCodigoEmail erro={erro} />
         <BotaoEnviar className="botao botao-primario botao-largo botao-alto" rotuloCarregando="Conferindo…">
           Continuar <ArrowRight size={18} aria-hidden="true" />
@@ -55,7 +61,7 @@ export function FormPrimeiroAcesso() {
       <div className="linha entre pequeno">
         <form
           action={f => {
-            f.set('cpf', cpf);
+            f.set(nome, cpf);
             return pedir(f);
           }}
         >
@@ -64,7 +70,7 @@ export function FormPrimeiroAcesso() {
           </button>
         </form>
         <button type="button" className="botao-link" onClick={() => setCorrigindo(true)}>
-          Corrigir o CPF
+          {gestao ? 'Corrigir o documento' : 'Corrigir o CPF'}
         </button>
       </div>
     </div>

@@ -6,33 +6,60 @@ import { z } from 'zod';
 import { db, schema as s } from '@/db';
 import { falha, sucesso, type Resultado } from '@/lib/acao';
 import { auditar } from '@/lib/auditoria';
-import { cifrar, hashCpf, sha256, tokenAleatorio } from '@/lib/cripto';
+import { cifrar, hashCpf, hashDocumento, tokenAleatorio } from '@/lib/cripto';
 import { enfileirarEmail, link } from '@/lib/email';
 import { encerrarTodasSessoes, exigirAdmin } from '@/lib/auth/sessao';
 import { gerarHashSenha } from '@/lib/auth/senha';
 import { usuarioLivreGestor } from '@/lib/auth/usuario-gestor';
-import { cpfValido, mascararCpf, normalizarBusca, primeiroNome, somenteDigitos } from '@/lib/dominio/regras';
+import {
+  cpfValido,
+  documentoValido,
+  mascararCpf,
+  normalizarBusca,
+  normalizarDocumento,
+  primeiroNome,
+  somenteDigitos,
+  type TipoDocumento
+} from '@/lib/dominio/regras';
 
 const uuid = z.string().uuid();
-const CONVITE_H = 72;
-
-/** Gera link de definição de senha (invalida os anteriores) e envia por e-mail. */
-async function enviarLinkSenha(gestorId: string, nome: string, email: string, usuario: string, novo: boolean) {
-  const token = tokenAleatorio();
-  const d = await db();
-  await d.transaction(async tx => {
-    await tx.update(s.tokenGestor).set({ usadoEm: new Date() }).where(eq(s.tokenGestor.gestorId, gestorId));
-    await tx
-      .insert(s.tokenGestor)
-      .values({ tokenHash: sha256(token), gestorId, expiraEm: new Date(Date.now() + CONVITE_H * 3600_000) });
-    await enfileirarEmail(
-      email,
-      novo ? 'Programa Formar: seu acesso à gestão' : 'Programa Formar: redefinição de senha da gestão',
-      `Olá, ${primeiroNome(nome)}.\n\n${novo ? 'Você recebeu acesso à gestão de formações do Programa Formar.' : 'O administrador pediu a redefinição da sua senha.'}\n\nSeu usuário de acesso é: ${usuario}\nGuarde-o: é com ele (e não com o e-mail) que você entra na gestão.\n\nDefina sua senha pelo link abaixo (vale por ${CONVITE_H} horas e só pode ser usado uma vez):\n${link('/gestao/definir-senha/' + token)}\n\nNo primeiro acesso você também vai configurar a verificação em duas etapas com um aplicativo autenticador no celular.`,
-      tx
-    );
-  });
+/**
+ * Convite da gestão: o primeiro acesso é feito em /gestao/primeiro-acesso com o CPF ou CNPJ cadastrado
+ * (código no e-mail → autenticador → senha), igual ao portal do servidor.
+ */
+async function enviarConviteGestor(nome: string, email: string, usuario: string, motivo: 'novo' | 'zerado') {
+  await enfileirarEmail(
+    email,
+    motivo === 'novo' ? 'Programa Formar: seu acesso à gestão' : 'Programa Formar: refaça o primeiro acesso à gestão',
+    `Olá, ${primeiroNome(nome)}.\n\n${motivo === 'novo' ? 'Você recebeu acesso à gestão de formações do Programa Formar.' : 'A administração do Programa Formar zerou o acesso da sua conta na gestão (senha e aplicativo autenticador). Para voltar a entrar, refaça o primeiro acesso.'}\n\nSeu usuário de acesso é: ${usuario}\nGuarde-o: é com ele (e não com o e-mail nem com o documento) que você entra na gestão.\n\nPara ativar o acesso:\n1. Abra ${link('/gestao/primeiro-acesso')}\n2. Informe o CPF ou o CNPJ cadastrado na sua conta.\n3. Digite o código que chegará neste e-mail.\n4. Cadastre o aplicativo autenticador no celular e crie sua senha.\n\nSe você não esperava este e-mail, avise o núcleo de formação da SEMED.`
+  );
 }
+
+/** CPF ou CNPJ do formulário (tipo escolhido + número). Vazio devolve null; inválido devolve a mensagem. */
+function lerDocumentoForm(form: FormData): { tipo: TipoDocumento; valor: string } | { erro: string } | null {
+  const valor = normalizarDocumento(String(form.get('documento') ?? '').slice(0, 24));
+  if (!valor) return null;
+  const tipo = String(form.get('documentoTipo') ?? '') === 'cnpj' ? 'cnpj' : 'cpf';
+  if (!documentoValido(tipo, valor))
+    return {
+      erro: tipo === 'cpf' ? 'CPF inválido: confira os 11 números.' : 'CNPJ inválido: confira os 14 caracteres.'
+    };
+  return { tipo, valor };
+}
+
+async function documentoEmUso(hash: string, excetoId?: string) {
+  const d = await db();
+  const [r] = await d
+    .select({ id: s.gestor.id })
+    .from(s.gestor)
+    .where(
+      excetoId ? and(eq(s.gestor.documentoHash, hash), ne(s.gestor.id, excetoId)) : eq(s.gestor.documentoHash, hash)
+    )
+    .limit(1);
+  return Boolean(r);
+}
+
+const MSG_DOC_USO = 'Já existe uma conta da gestão com esse documento.';
 
 /** Alvo de uma ação administrativa: nunca outro administrador nem a própria conta. */
 async function alvoGestor(id: string, adminId: string) {
@@ -59,11 +86,16 @@ export async function criarGestor(_: Resultado, form: FormData): Promise<Resulta
     for (const i of p.error.issues) erros[String(i.path[0])] ??= i.message;
     return falha('Confira os campos destacados.', erros);
   }
+  const doc = lerDocumentoForm(form);
+  if (!doc) return falha('Informe o CPF ou o CNPJ da pessoa.', { documento: 'Informe o CPF ou o CNPJ da pessoa.' });
+  if ('erro' in doc) return falha(doc.erro, { documento: doc.erro });
+  const documentoHash = hashDocumento(doc.tipo, doc.valor);
   const d = await db();
   const [existe] = await d.select({ id: s.gestor.id }).from(s.gestor).where(eq(s.gestor.email, p.data.email)).limit(1);
   if (existe) return falha('Já existe uma conta com esse e-mail.', { email: 'Já existe uma conta com esse e-mail.' });
+  if (await documentoEmUso(documentoHash)) return falha(MSG_DOC_USO, { documento: MSG_DOC_USO });
   const usuario = await usuarioLivreGestor(p.data.nome);
-  // Senha inutilizável até a pessoa definir a dela pelo link.
+  // Senha inutilizável até a pessoa criar a dela no primeiro acesso.
   const [g] = await d
     .insert(s.gestor)
     .values({
@@ -71,18 +103,21 @@ export async function criarGestor(_: Resultado, form: FormData): Promise<Resulta
       email: p.data.email,
       usuario,
       senhaHash: await gerarHashSenha(tokenAleatorio(48)),
+      documentoTipo: doc.tipo,
+      documentoHash,
+      documentoCifrado: cifrar(doc.valor),
       perfil: 'gestor_nucleo',
       criadoPor: adm.id
     })
     .returning({ id: s.gestor.id });
-  await enviarLinkSenha(g.id, p.data.nome, p.data.email, usuario, true);
+  await enviarConviteGestor(p.data.nome, p.data.email, usuario, 'novo');
   await auditar({
     atorTipo: 'gestor',
     atorId: adm.id,
     acao: 'criar_gestor',
     entidade: 'gestor',
     entidadeId: g.id,
-    detalhes: { email: p.data.email, usuario }
+    detalhes: { email: p.data.email, usuario, documento: doc.tipo }
   });
   revalidatePath('/gestao/admin/gestores');
   return sucesso(`Conta criada com o usuário ${usuario}. O convite foi enviado para ${p.data.email}.`);
@@ -96,16 +131,52 @@ export async function acaoGestor(_: Resultado, form: FormData): Promise<Resultad
   const d = await db();
 
   if (acao === 'reenviar') {
-    await enviarLinkSenha(g.id, g.nome, g.email, g.usuario, !g.ultimoLoginEm);
+    if (g.primeiroAcessoEm) return falha(`${g.nome} já concluiu o primeiro acesso. Para refazer, use "Zerar acesso".`);
+    if (!g.documentoHash) return falha('Cadastre o CPF ou o CNPJ da pessoa antes de enviar o convite.');
+    await enviarConviteGestor(g.nome, g.email, g.usuario, 'novo');
     await auditar({
       atorTipo: 'gestor',
       atorId: adm.id,
-      acao: 'enviar_link_senha_gestor',
+      acao: 'reenviar_convite_gestor',
       entidade: 'gestor',
       entidadeId: g.id
     });
     revalidatePath('/gestao/admin/gestores');
-    return sucesso(`Link para definir a senha enviado para ${g.email}.`);
+    return sucesso(`Convite de primeiro acesso reenviado para ${g.email}.`);
+  }
+  if (acao === 'zerar_acesso') {
+    if (!g.documentoHash) return falha('Cadastre o CPF ou o CNPJ da pessoa antes de zerar o acesso.');
+    await d.transaction(async tx => {
+      await tx
+        .update(s.gestor)
+        .set({
+          senhaHash: await gerarHashSenha(tokenAleatorio(48)),
+          primeiroAcessoEm: null,
+          totpSegredo: null,
+          totpPendente: null,
+          totpAtivadoEm: null,
+          totpUltimoPasso: null
+        })
+        .where(eq(s.gestor.id, g.id));
+      await tx.delete(s.codigoRecuperacao).where(eq(s.codigoRecuperacao.gestorId, g.id));
+      await tx
+        .update(s.tokenGestor)
+        .set({ usadoEm: new Date() })
+        .where(and(eq(s.tokenGestor.gestorId, g.id), isNull(s.tokenGestor.usadoEm)));
+    });
+    await encerrarTodasSessoes('gestor', g.id);
+    await enviarConviteGestor(g.nome, g.email, g.usuario, 'zerado');
+    await auditar({
+      atorTipo: 'gestor',
+      atorId: adm.id,
+      acao: 'zerar_acesso_gestor',
+      entidade: 'gestor',
+      entidadeId: g.id
+    });
+    revalidatePath('/gestao/admin/gestores');
+    return sucesso(
+      `Acesso de ${g.nome} zerado. A pessoa recebeu um e-mail para refazer o primeiro acesso com o CPF ou CNPJ.`
+    );
   }
   if (acao === 'desativar' || acao === 'reativar') {
     const ativo = acao === 'reativar';
@@ -284,26 +355,41 @@ export async function editarGestor(_: Resultado, form: FormData): Promise<Result
     return falha('Confira os campos destacados.', erros);
   }
   const { nome, email } = p.data;
+  const doc = lerDocumentoForm(form);
+  if (doc && 'erro' in doc) return falha(doc.erro, { documento: doc.erro });
+  const novoDoc = doc ? { tipo: doc.tipo, hash: hashDocumento(doc.tipo, doc.valor), valor: doc.valor } : null;
   const mudou: string[] = [];
   if (nome !== g.nome) mudou.push('nome');
   if (email !== g.email) mudou.push('email');
+  if (novoDoc && novoDoc.hash !== g.documentoHash) mudou.push('documento');
   if (!mudou.length) return sucesso('Nada mudou.');
   const d = await db();
+  if (mudou.includes('documento') && (await documentoEmUso(novoDoc!.hash, g.id)))
+    return falha(MSG_DOC_USO, { documento: MSG_DOC_USO });
   if (email !== g.email) {
     const [existe] = await d.select({ id: s.gestor.id }).from(s.gestor).where(eq(s.gestor.email, email)).limit(1);
     if (existe) return falha('Já existe uma conta com esse e-mail.', { email: 'Já existe uma conta com esse e-mail.' });
   }
-  await d.update(s.gestor).set({ nome, email }).where(eq(s.gestor.id, g.id));
+  await d
+    .update(s.gestor)
+    .set({
+      nome,
+      email,
+      ...(mudou.includes('documento')
+        ? { documentoTipo: novoDoc!.tipo, documentoHash: novoDoc!.hash, documentoCifrado: cifrar(novoDoc!.valor) }
+        : {})
+    })
+    .where(eq(s.gestor.id, g.id));
   let extra = '';
   if (email !== g.email) {
     await avisarTrocaEmail(g.email, email, nome);
-    // Links de senha enviados ao endereço antigo deixam de valer; convite pendente vai para o novo.
+    // Links e códigos enviados ao endereço antigo deixam de valer; convite pendente vai para o novo.
     await d
       .update(s.tokenGestor)
       .set({ usadoEm: new Date() })
       .where(and(eq(s.tokenGestor.gestorId, g.id), isNull(s.tokenGestor.usadoEm)));
-    if (!g.senhaAlteradaEm) {
-      await enviarLinkSenha(g.id, nome, email, g.usuario, true);
+    if (!g.primeiroAcessoEm && (novoDoc?.hash ?? g.documentoHash)) {
+      await enviarConviteGestor(nome, email, g.usuario, 'novo');
       extra = ' O convite foi reenviado para o novo e-mail.';
     }
   }

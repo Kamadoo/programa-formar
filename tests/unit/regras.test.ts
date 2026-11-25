@@ -9,7 +9,11 @@ import {
   vaiParaConferencia,
   cargaCumprida,
   codigoValidacao,
+  cnpjValido,
   cpfValido,
+  documentoValido,
+  mascararDocumento,
+  tipoDocumento,
   dataExtenso,
   frequenciaPct,
   mascararCpf,
@@ -181,5 +185,31 @@ describe('conteúdo e datas', () => {
     expect(dataExtenso('2026-10-19')).toBe('19 de outubro de 2026');
     expect(periodo(['2026-10-19', '2026-08-03'])).toBe('03/08/2026 a 19/10/2026');
     expect(periodo([])).toBe('A definir');
+  });
+});
+
+describe('CPF ou CNPJ', () => {
+  it('reconhece o tipo pelo tamanho', () => {
+    expect(tipoDocumento('529.982.247-25')).toBe('cpf');
+    expect(tipoDocumento('11.222.333/0001-81')).toBe('cnpj');
+    expect(tipoDocumento('12.abc.345/01de-35')).toBe('cnpj');
+    expect(tipoDocumento('1234')).toBeNull();
+  });
+  it('valida CNPJ numérico e alfanumérico', () => {
+    expect(cnpjValido('11.222.333/0001-81')).toBe(true);
+    expect(cnpjValido('11.222.333/0001-82')).toBe(false);
+    expect(cnpjValido('12.ABC.345/01DE-35')).toBe(true);
+    expect(cnpjValido('12abc34501de35')).toBe(true);
+    expect(cnpjValido('12.ABC.345/01DE-36')).toBe(false);
+    expect(cnpjValido('00.000.000/0000-00')).toBe(false);
+  });
+  it('confere o documento conforme o tipo escolhido', () => {
+    expect(documentoValido('cpf', '529.982.247-25')).toBe(true);
+    expect(documentoValido('cpf', '11.222.333/0001-81')).toBe(false);
+    expect(documentoValido('cnpj', '529.982.247-25')).toBe(false);
+  });
+  it('mascara', () => {
+    expect(mascararDocumento('cpf', '52998224725')).toBe('***.982.247-**');
+    expect(mascararDocumento('cnpj', '11222333000181')).toBe('**.222.333/****-**');
   });
 });

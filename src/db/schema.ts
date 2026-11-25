@@ -87,6 +87,11 @@ export const gestor = pgTable(
     // Login da gestão (nome.sobrenome, nome.sobrenome2…), gerado ao criar a conta. O e-mail fica para convite e avisos.
     usuario: text('usuario').notNull(),
     senhaHash: text('senha_hash').notNull(),
+    // CPF ou CNPJ, escolhido no cadastro: usado só no primeiro acesso (como o CPF do servidor no portal).
+    documentoTipo: text('documento_tipo').$type<'cpf' | 'cnpj'>(),
+    documentoHash: text('documento_hash'), // HMAC (hashDocumento) — busca sem guardar em claro
+    documentoCifrado: text('documento_cifrado'), // AES-GCM, para mostrar mascarado
+    primeiroAcessoEm: timestamp('primeiro_acesso_em', { withTimezone: true }), // cadastro concluído (senha + app)
     perfil: perfilGestor('perfil').notNull().default('gestor_nucleo'),
     ativo: boolean('ativo').notNull().default(true),
     // Verificação em duas etapas (TOTP). Segredos sempre cifrados (AES-GCM).
@@ -101,7 +106,11 @@ export const gestor = pgTable(
     criadoPor: uuid('criado_por'),
     criadoEm: criadoEm()
   },
-  t => [uniqueIndex('gestor_email_uq').on(t.email), uniqueIndex('gestor_usuario_uq').on(t.usuario)]
+  t => [
+    uniqueIndex('gestor_email_uq').on(t.email),
+    uniqueIndex('gestor_usuario_uq').on(t.usuario),
+    uniqueIndex('gestor_documento_uq').on(t.documentoHash)
+  ]
 );
 
 /* ------------------------------------------------------------------ */
@@ -150,6 +159,8 @@ export const tokenGestor = pgTable('token_gestor', {
   gestorId: uuid('gestor_id')
     .notNull()
     .references(() => gestor.id, { onDelete: 'cascade' }),
+  // 'link' = link de senha (administrador criado pelo terminal); 'codigo' = código de 6 dígitos do primeiro acesso.
+  tipo: text('tipo').$type<'link' | 'codigo'>().notNull().default('link'),
   criadoEm: criadoEm(),
   expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
   usadoEm: timestamp('usado_em', { withTimezone: true })

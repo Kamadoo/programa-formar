@@ -41,6 +41,8 @@ const MSG_SEGREDO_ILEGIVEL =
 export async function ativarVerificacao(_: ResultadoAtivacao, form: FormData): Promise<ResultadoAtivacao> {
   const g = await gestorParcial();
   if (!g) redirect('/gestao/entrar');
+  // Primeiro acesso pela metade (sem senha): só pelo fluxo próprio.
+  if (!g.cadastroConcluido) redirect('/gestao/primeiro-acesso/autenticador');
   if (g.totpAtivo) redirect('/gestao/verificacao');
   const chave = 'mfa:' + g.id;
   if (await bloqueadoAte(chave)) return falha(MSG_BLOQUEIO);
@@ -78,6 +80,8 @@ export async function ativarVerificacao(_: ResultadoAtivacao, form: FormData): P
 export async function concluirAtivacao() {
   const g = await gestorParcial();
   if (!g) redirect('/gestao/entrar');
+  // Primeiro acesso pela metade (sem senha): só pelo fluxo próprio.
+  if (!g.cadastroConcluido) redirect('/gestao/primeiro-acesso/autenticador');
   if (!g.totpAtivo || !(await segundaEtapaOkNestaSessao())) redirect('/gestao/verificacao');
   await d_login(g.id);
   await concluirSegundaEtapa(g.id);
@@ -100,6 +104,8 @@ async function d_login(gestorId: string) {
 export async function verificarSegundaEtapa(_: Resultado, form: FormData): Promise<Resultado> {
   const g = await gestorParcial();
   if (!g) redirect('/gestao/entrar');
+  // Primeiro acesso pela metade (sem senha): só pelo fluxo próprio.
+  if (!g.cadastroConcluido) redirect('/gestao/primeiro-acesso/autenticador');
   if (!g.totpAtivo) redirect('/gestao/verificacao');
   if (await segundaEtapaOkNestaSessao()) await concluirAtivacao();
   const chave = 'mfa:' + g.id;

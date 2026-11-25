@@ -19,6 +19,7 @@ export default async function Verificacao() {
   if (await gestorAtual()) redirect('/gestao');
   const g = await gestorParcial();
   if (!g) redirect('/gestao/entrar');
+  if (!g.cadastroConcluido) redirect('/gestao/primeiro-acesso/autenticador');
 
   // Acabou de ativar nesta sessão: mantém o mesmo componente na tela para mostrar os códigos de recuperação.
   if (g.totpAtivo && (await segundaEtapaOkNestaSessao())) {

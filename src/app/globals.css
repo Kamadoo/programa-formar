@@ -505,6 +505,21 @@ textarea {
   font-weight: 600;
   color: var(--texto-2);
 }
+fieldset.campo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+fieldset.campo > legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+/* CPF/CNPJ: tipo + número na mesma linha. */
+.campo-documento {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px;
+}
 .entrada {
   width: 100%;
   min-height: 44px;

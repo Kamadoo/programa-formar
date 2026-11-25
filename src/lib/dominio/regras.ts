@@ -196,6 +196,51 @@ export function mascararCpf(entrada: string): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* CPF ou CNPJ (contas da gestão)                                        */
+/* O CNPJ pode ser alfanumérico (Receita Federal, a partir de julho/2026):  */
+/* 12 caracteres de 0-9/A-Z + 2 dígitos verificadores.                     */
+/* ------------------------------------------------------------------ */
+
+export type TipoDocumento = 'cpf' | 'cnpj';
+
+/** Maiúsculas, sem pontuação nem espaços (ex.: "12.ABC.345/01DE-35" → "12ABC34501DE35"). */
+export function normalizarDocumento(entrada: string): string {
+  return entrada.toUpperCase().replace(/[^0-9A-Z]/g, '');
+}
+
+/** Validação dos dígitos verificadores do CNPJ (numérico ou alfanumérico). */
+export function cnpjValido(entrada: string): boolean {
+  const v = normalizarDocumento(entrada);
+  if (!/^[0-9A-Z]{12}\d{2}$/.test(v) || /^(.)\1{13}$/.test(v)) return false;
+  const dv = (len: number) => {
+    let soma = 0;
+    for (let i = 0; i < len; i++) soma += (v.charCodeAt(i) - 48) * (((len - 1 - i) % 8) + 2);
+    const r = soma % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return dv(12) === Number(v[12]) && dv(13) === Number(v[13]);
+}
+
+/** Tipo pelo tamanho: 11 números = CPF, 14 caracteres = CNPJ. Não confere os dígitos. */
+export function tipoDocumento(entrada: string): TipoDocumento | null {
+  const v = normalizarDocumento(entrada);
+  if (/^\d{11}$/.test(v)) return 'cpf';
+  if (v.length === 14) return 'cnpj';
+  return null;
+}
+
+export function documentoValido(tipo: TipoDocumento, entrada: string): boolean {
+  return tipo === 'cpf' ? cpfValido(entrada) && /^\d{11}$/.test(normalizarDocumento(entrada)) : cnpjValido(entrada);
+}
+
+/** ***.456.789-** (CPF) ou **.345.678/****-** (CNPJ) — a forma que as telas podem mostrar. */
+export function mascararDocumento(tipo: TipoDocumento, entrada: string): string {
+  if (tipo === 'cpf') return mascararCpf(entrada);
+  const v = normalizarDocumento(entrada).padStart(14, '0');
+  return `**.${v.slice(2, 5)}.${v.slice(5, 8)}/****-**`;
+}
+
+/* ------------------------------------------------------------------ */
 /* Conteúdo programático (1 módulo por linha, itens com "-")             */
 /* ------------------------------------------------------------------ */
 
