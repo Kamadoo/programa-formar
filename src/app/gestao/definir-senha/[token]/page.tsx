@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { UserRound } from 'lucide-react';
 import { MoldeAcesso } from '@/app/(acesso)/MoldeAcesso';
 import { validarTokenGestor } from '@/lib/auth/tokens';
 import { primeiroNome } from '@/lib/dominio/regras';
@@ -26,7 +27,14 @@ export default async function Page({ params }: PageProps<'/gestao/definir-senha/
       titulo={`Olá, ${primeiroNome(t.nome)}`}
       subtitulo="Crie sua senha da gestão. Em seguida você ativa a verificação em duas etapas."
     >
-      <FormSenhaGestor token={token} email={t.email} />
+      <p className="aviso" role="note">
+        <UserRound size={18} aria-hidden="true" />
+        <span>
+          Seu usuário de acesso é <strong className="mono">{t.usuario}</strong>. Guarde-o: é com ele (e não com o
+          e-mail) que você entra na gestão.
+        </span>
+      </p>
+      <FormSenhaGestor token={token} usuario={t.usuario} />
     </MoldeAcesso>
   );
 }

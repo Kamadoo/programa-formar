@@ -45,7 +45,7 @@ Presença lançada por encontro, com frequência calculada na hora e certificado
   </tr>
   <tr>
     <td><img src="docs/imagens/12-validacao.png" alt="Validação pública de certificado"><br><sub><b>Validação pública</b>: qualquer pessoa confere a autenticidade pelo código.</sub></td>
-    <td><img src="docs/imagens/01-entrada-gestao.png" alt="Tela de entrada da gestão"><br><sub><b>Acesso</b>: senha e verificação em duas etapas obrigatória.</sub></td>
+    <td><img src="docs/imagens/01-entrada-gestao.png" alt="Tela de entrada da gestão"><br><sub><b>Acesso</b>: usuário, senha e verificação em duas etapas obrigatória.</sub></td>
   </tr>
 </table>
 
@@ -85,7 +85,7 @@ npm run db:reset   # cria o banco local e carrega os dados fictícios
 npm run dev        # http://localhost:3000
 ```
 
-As contas de teste estão no início de [`scripts/seed.ts`](scripts/seed.ts). A gestão exige verificação em duas etapas: no primeiro acesso, leia o QR code com um aplicativo autenticador. Em desenvolvimento, os e-mails não são enviados e aparecem em `/dev/emails`.
+As contas de teste estão no início de [`scripts/seed.ts`](scripts/seed.ts); a gestão entra com usuário (`admin.teste`, `ana.formadora`), não com e-mail, e exige verificação em duas etapas: no primeiro acesso, leia o QR code com um aplicativo autenticador. Em desenvolvimento, os e-mails não são enviados e aparecem em `/dev/emails`.
 
 > O PGlite aceita um processo por vez: pare o `npm run dev` antes de rodar `npm run db:reset`.
 

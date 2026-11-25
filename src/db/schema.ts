@@ -84,6 +84,8 @@ export const gestor = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     nome: text('nome').notNull(),
     email: text('email').notNull(),
+    // Login da gestão (nome.sobrenome, nome.sobrenome2…), gerado ao criar a conta. O e-mail fica para convite e avisos.
+    usuario: text('usuario').notNull(),
     senhaHash: text('senha_hash').notNull(),
     perfil: perfilGestor('perfil').notNull().default('gestor_nucleo'),
     ativo: boolean('ativo').notNull().default(true),
@@ -99,7 +101,7 @@ export const gestor = pgTable(
     criadoPor: uuid('criado_por'),
     criadoEm: criadoEm()
   },
-  t => [uniqueIndex('gestor_email_uq').on(t.email)]
+  t => [uniqueIndex('gestor_email_uq').on(t.email), uniqueIndex('gestor_usuario_uq').on(t.usuario)]
 );
 
 /* ------------------------------------------------------------------ */

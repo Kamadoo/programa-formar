@@ -11,6 +11,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db, schema as s } from '@/db';
 import { auditar } from '@/lib/auditoria';
 import { gerarHashSenha } from '@/lib/auth/senha';
+import { usuarioLivreGestor } from '@/lib/auth/usuario-gestor';
 import { sha256, tokenAleatorio } from '@/lib/cripto';
 import { env } from '@/lib/env';
 
@@ -56,7 +57,13 @@ async function main() {
     if (!nome || nome.length < 3) throw new Error('Informe --nome para criar a conta.');
     [g] = await d
       .insert(s.gestor)
-      .values({ nome, email, perfil: 'admin', senhaHash: await gerarHashSenha(tokenAleatorio(48)) })
+      .values({
+        nome,
+        email,
+        usuario: await usuarioLivreGestor(nome),
+        perfil: 'admin',
+        senhaHash: await gerarHashSenha(tokenAleatorio(48))
+      })
       .returning();
     console.log(`Conta de administrador criada para ${email}.`);
   } else if (g.perfil !== 'admin') {
@@ -97,6 +104,7 @@ async function main() {
     entidadeId: g.id
   });
 
+  console.log(`\nUsuário de acesso: ${g.usuario}   (login da gestão = usuário + senha + código do autenticador)`);
   console.log('\nDefina a senha neste link (vale por 2 horas, uso único):');
   console.log(new URL('/gestao/definir-senha/' + token, env().SITE_URL).toString());
   console.log('\nNo primeiro acesso você vai ativar a verificação em duas etapas.');

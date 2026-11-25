@@ -133,7 +133,13 @@ async function lerSessao(tipo: Tipo, etapa: Etapa = 'completa'): Promise<string 
   return s.usuarioId;
 }
 
-export type GestorAtual = { id: string; nome: string; email: string; perfil: 'gestor_nucleo' | 'admin' };
+export type GestorAtual = {
+  id: string;
+  nome: string;
+  email: string;
+  usuario: string;
+  perfil: 'gestor_nucleo' | 'admin';
+};
 export type GestorParcial = GestorAtual & { totpAtivo: boolean };
 export type ServidorAtual = {
   id: string;
@@ -157,6 +163,7 @@ export const gestorAtual = cache(async (): Promise<GestorAtual | null> => {
       id: schema.gestor.id,
       nome: schema.gestor.nome,
       email: schema.gestor.email,
+      usuario: schema.gestor.usuario,
       perfil: schema.gestor.perfil,
       ativo: schema.gestor.ativo,
       testeAte: schema.gestor.testeAte
@@ -165,7 +172,7 @@ export const gestorAtual = cache(async (): Promise<GestorAtual | null> => {
     .where(eq(schema.gestor.id, id))
     .limit(1);
   if (!g || !g.ativo || testeVencido(g.testeAte)) return null;
-  return { id: g.id, nome: g.nome, email: g.email, perfil: g.perfil };
+  return { id: g.id, nome: g.nome, email: g.email, usuario: g.usuario, perfil: g.perfil };
 });
 
 export const servidorAtual = cache(async (): Promise<ServidorAtual | null> => {
@@ -212,7 +219,14 @@ export const gestorParcial = cache(async (): Promise<GestorParcial | null> => {
   const d = await db();
   const [g] = await d.select().from(schema.gestor).where(eq(schema.gestor.id, id)).limit(1);
   if (!g || !g.ativo) return null;
-  return { id: g.id, nome: g.nome, email: g.email, perfil: g.perfil, totpAtivo: Boolean(g.totpSegredo) };
+  return {
+    id: g.id,
+    nome: g.nome,
+    email: g.email,
+    usuario: g.usuario,
+    perfil: g.perfil,
+    totpAtivo: Boolean(g.totpSegredo)
+  };
 });
 
 export async function exigirServidor(): Promise<ServidorAtual> {

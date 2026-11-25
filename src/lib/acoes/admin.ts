@@ -10,13 +10,14 @@ import { cifrar, hashCpf, sha256, tokenAleatorio } from '@/lib/cripto';
 import { enfileirarEmail, link } from '@/lib/email';
 import { encerrarTodasSessoes, exigirAdmin } from '@/lib/auth/sessao';
 import { gerarHashSenha } from '@/lib/auth/senha';
+import { usuarioLivreGestor } from '@/lib/auth/usuario-gestor';
 import { cpfValido, mascararCpf, normalizarBusca, primeiroNome, somenteDigitos } from '@/lib/dominio/regras';
 
 const uuid = z.string().uuid();
 const CONVITE_H = 72;
 
 /** Gera link de definição de senha (invalida os anteriores) e envia por e-mail. */
-async function enviarLinkSenha(gestorId: string, nome: string, email: string, novo: boolean) {
+async function enviarLinkSenha(gestorId: string, nome: string, email: string, usuario: string, novo: boolean) {
   const token = tokenAleatorio();
   const d = await db();
   await d.transaction(async tx => {
@@ -27,7 +28,7 @@ async function enviarLinkSenha(gestorId: string, nome: string, email: string, no
     await enfileirarEmail(
       email,
       novo ? 'Programa Formar: seu acesso à gestão' : 'Programa Formar: redefinição de senha da gestão',
-      `Olá, ${primeiroNome(nome)}.\n\n${novo ? 'Você recebeu acesso à gestão de formações do Programa Formar.' : 'O administrador pediu a redefinição da sua senha.'}\nDefina sua senha pelo link abaixo (vale por ${CONVITE_H} horas e só pode ser usado uma vez):\n${link('/gestao/definir-senha/' + token)}\n\nNo primeiro acesso você também vai configurar a verificação em duas etapas com um aplicativo autenticador no celular.`,
+      `Olá, ${primeiroNome(nome)}.\n\n${novo ? 'Você recebeu acesso à gestão de formações do Programa Formar.' : 'O administrador pediu a redefinição da sua senha.'}\n\nSeu usuário de acesso é: ${usuario}\nGuarde-o: é com ele (e não com o e-mail) que você entra na gestão.\n\nDefina sua senha pelo link abaixo (vale por ${CONVITE_H} horas e só pode ser usado uma vez):\n${link('/gestao/definir-senha/' + token)}\n\nNo primeiro acesso você também vai configurar a verificação em duas etapas com um aplicativo autenticador no celular.`,
       tx
     );
   });
@@ -61,28 +62,30 @@ export async function criarGestor(_: Resultado, form: FormData): Promise<Resulta
   const d = await db();
   const [existe] = await d.select({ id: s.gestor.id }).from(s.gestor).where(eq(s.gestor.email, p.data.email)).limit(1);
   if (existe) return falha('Já existe uma conta com esse e-mail.', { email: 'Já existe uma conta com esse e-mail.' });
+  const usuario = await usuarioLivreGestor(p.data.nome);
   // Senha inutilizável até a pessoa definir a dela pelo link.
   const [g] = await d
     .insert(s.gestor)
     .values({
       nome: p.data.nome,
       email: p.data.email,
+      usuario,
       senhaHash: await gerarHashSenha(tokenAleatorio(48)),
       perfil: 'gestor_nucleo',
       criadoPor: adm.id
     })
     .returning({ id: s.gestor.id });
-  await enviarLinkSenha(g.id, p.data.nome, p.data.email, true);
+  await enviarLinkSenha(g.id, p.data.nome, p.data.email, usuario, true);
   await auditar({
     atorTipo: 'gestor',
     atorId: adm.id,
     acao: 'criar_gestor',
     entidade: 'gestor',
     entidadeId: g.id,
-    detalhes: { email: p.data.email }
+    detalhes: { email: p.data.email, usuario }
   });
   revalidatePath('/gestao/admin/gestores');
-  return sucesso(`Conta criada. O convite foi enviado para ${p.data.email}.`);
+  return sucesso(`Conta criada com o usuário ${usuario}. O convite foi enviado para ${p.data.email}.`);
 }
 
 export async function acaoGestor(_: Resultado, form: FormData): Promise<Resultado> {
@@ -93,7 +96,7 @@ export async function acaoGestor(_: Resultado, form: FormData): Promise<Resultad
   const d = await db();
 
   if (acao === 'reenviar') {
-    await enviarLinkSenha(g.id, g.nome, g.email, !g.ultimoLoginEm);
+    await enviarLinkSenha(g.id, g.nome, g.email, g.usuario, !g.ultimoLoginEm);
     await auditar({
       atorTipo: 'gestor',
       atorId: adm.id,
@@ -300,7 +303,7 @@ export async function editarGestor(_: Resultado, form: FormData): Promise<Result
       .set({ usadoEm: new Date() })
       .where(and(eq(s.tokenGestor.gestorId, g.id), isNull(s.tokenGestor.usadoEm)));
     if (!g.senhaAlteradaEm) {
-      await enviarLinkSenha(g.id, nome, email, true);
+      await enviarLinkSenha(g.id, nome, email, g.usuario, true);
       extra = ' O convite foi reenviado para o novo e-mail.';
     }
   }

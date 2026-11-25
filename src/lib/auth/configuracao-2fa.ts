@@ -7,7 +7,7 @@ import { gerarSegredo, uriOtpauth } from './totp';
 
 // Fica fora de 'use server' de propósito: não pode virar uma ação chamável pelo navegador.
 /** Segredo pendente (cria se ainda não houver) + QR code para o aplicativo autenticador. */
-export async function prepararConfiguracao(gestorId: string, email: string) {
+export async function prepararConfiguracao(gestorId: string, usuario: string) {
   const d = await db();
   const [g] = await d
     .select({ pendente: s.gestor.totpPendente })
@@ -22,7 +22,7 @@ export async function prepararConfiguracao(gestorId: string, email: string) {
       .set({ totpPendente: cifrar(segredo) })
       .where(eq(s.gestor.id, gestorId));
   }
-  const qr = await QRCode.toString(uriOtpauth(segredo, email), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' });
+  const qr = await QRCode.toString(uriOtpauth(segredo, usuario), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' });
   return {
     segredoFormatado: segredo.match(/.{1,4}/g)!.join(' '),
     qrDataUri: 'data:image/svg+xml;base64,' + Buffer.from(qr).toString('base64')

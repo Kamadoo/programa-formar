@@ -92,6 +92,13 @@
       "when": 1795559824308,
       "tag": "0012_convites_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795565006794,
+      "tag": "0013_usuario_gestor",
+      "breakpoints": true
     }
   ]
 }

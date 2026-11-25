@@ -8,17 +8,18 @@
 
 ## Autenticação
 
-| Item | Como funciona |
-| --- | --- |
-| Senhas | Argon2id (19 MiB, 2 iterações). Mínimo de 10 caracteres com letras e números; sequências óbvias recusadas. |
-| Sessão | Token aleatório de 256 bits no cookie `HttpOnly`, `SameSite=Lax`, `Secure` e prefixo `__Host-` em produção; o banco guarda só o SHA-256. Validade de 10 h (gestão) / 12 h (portal) e encerramento após 2 h sem uso. |
-| Duas etapas (gestão) | Obrigatória para todos da gestão. TOTP (RFC 6238, 6 dígitos/30 s, ±1 passo, código não reutilizável), segredo cifrado com AES-GCM. A senha cria só uma sessão parcial (10 min) que não acessa nada; a sessão completa nasce com token novo depois do código. 10 códigos de recuperação de uso único (só o hash fica no banco). |
-| Administrador | Perfil exclusivo, criado só pelo terminal (`npm run admin`), nunca pela interface. Administra contas da gestão, base de servidores e auditoria; não pode alterar outro administrador. Recuperação de acesso também só pelo terminal (`--recuperar`). |
-| Força bruta | Bloqueio progressivo por identificador após 5 falhas em 15 min (1, 2, 4… até 60 min). |
-| Enumeração | Tempo mínimo de resposta no login e nos pedidos de código; a mensagem é sempre a mesma, exista ou não a conta. |
-| Login do servidor | Usuário gerado no primeiro acesso + senha + aplicativo autenticador (TOTP) ou código de recuperação. CPF e matrícula não servem para entrar. |
-| Primeiro acesso / nova senha | CPF (ativação) ou usuário (nova senha) → código de 6 dígitos, uso único, 10 min, guardado só como hash, enviado ao e-mail institucional. Pedir um novo invalida os anteriores; erros entram no bloqueio progressivo. Trocar a senha encerra todas as sessões da conta. |
-| CSRF | Server Actions do Next conferem a origem; cookies `SameSite=Lax`; `form-action 'self'`. |
+| Item                         | Como funciona                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Senhas                       | Argon2id (19 MiB, 2 iterações). Mínimo de 10 caracteres com letras e números; sequências óbvias recusadas.                                                                                                                                                                                                                     |
+| Sessão                       | Token aleatório de 256 bits no cookie `HttpOnly`, `SameSite=Lax`, `Secure` e prefixo `__Host-` em produção; o banco guarda só o SHA-256. Validade de 10 h (gestão) / 12 h (portal) e encerramento após 2 h sem uso.                                                                                                            |
+| Duas etapas (gestão)         | Obrigatória para todos da gestão. TOTP (RFC 6238, 6 dígitos/30 s, ±1 passo, código não reutilizável), segredo cifrado com AES-GCM. A senha cria só uma sessão parcial (10 min) que não acessa nada; a sessão completa nasce com token novo depois do código. 10 códigos de recuperação de uso único (só o hash fica no banco). |
+| Administrador                | Perfil exclusivo, criado só pelo terminal (`npm run admin`), nunca pela interface. Administra contas da gestão, base de servidores e auditoria; não pode alterar outro administrador. Recuperação de acesso também só pelo terminal (`--recuperar`).                                                                           |
+| Força bruta                  | Bloqueio progressivo por identificador após 5 falhas em 15 min (1, 2, 4… até 60 min).                                                                                                                                                                                                                                          |
+| Enumeração                   | Tempo mínimo de resposta no login e nos pedidos de código; a mensagem é sempre a mesma, exista ou não a conta.                                                                                                                                                                                                                 |
+| Login da gestão              | Usuário gerado ao criar a conta (`nome.sobrenome`) + senha + aplicativo autenticador (TOTP) ou código de recuperação. O e-mail serve só para convite, avisos e links de senha.                                                                                                                                                 |
+| Login do servidor            | Usuário gerado no primeiro acesso + senha + aplicativo autenticador (TOTP) ou código de recuperação. CPF e matrícula não servem para entrar.                                                                                                                                                                                   |
+| Primeiro acesso / nova senha | CPF (ativação) ou usuário (nova senha) → código de 6 dígitos, uso único, 10 min, guardado só como hash, enviado ao e-mail institucional. Pedir um novo invalida os anteriores; erros entram no bloqueio progressivo. Trocar a senha encerra todas as sessões da conta.                                                         |
+| CSRF                         | Server Actions do Next conferem a origem; cookies `SameSite=Lax`; `form-action 'self'`.                                                                                                                                                                                                                                        |
 
 ## Dados pessoais (LGPD)
 
@@ -39,15 +40,15 @@ Tabela `auditoria` só de inclusão: um gatilho no banco recusa `UPDATE` e `DELE
 
 ## Navegador
 
-| Cabeçalho | Valor |
-| --- | --- |
-| `Content-Security-Policy` | `default-src 'self'`; scripts só com nonce por requisição + `strict-dynamic` (sem `unsafe-inline`); `object-src 'none'`; `base-uri 'none'`; `form-action 'self'`; `frame-ancestors 'none'` |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (produção) |
-| `X-Frame-Options` | `DENY` |
-| `X-Content-Type-Options` | `nosniff` |
-| `Referrer-Policy` | `no-referrer` (os links de senha não vazam por Referer) |
-| `Cross-Origin-Opener-Policy` / `Resource-Policy` | `same-origin` |
-| `Permissions-Policy` | câmera, microfone, geolocalização e pagamento bloqueados |
+| Cabeçalho                                        | Valor                                                                                                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Content-Security-Policy`                        | `default-src 'self'`; scripts só com nonce por requisição + `strict-dynamic` (sem `unsafe-inline`); `object-src 'none'`; `base-uri 'none'`; `form-action 'self'`; `frame-ancestors 'none'` |
+| `Strict-Transport-Security`                      | `max-age=31536000; includeSubDomains` (produção)                                                                                                                                           |
+| `X-Frame-Options`                                | `DENY`                                                                                                                                                                                     |
+| `X-Content-Type-Options`                         | `nosniff`                                                                                                                                                                                  |
+| `Referrer-Policy`                                | `no-referrer` (os links de senha não vazam por Referer)                                                                                                                                    |
+| `Cross-Origin-Opener-Policy` / `Resource-Policy` | `same-origin`                                                                                                                                                                              |
+| `Permissions-Policy`                             | câmera, microfone, geolocalização e pagamento bloqueados                                                                                                                                   |
 
 Páginas da gestão e do portal saem com `Cache-Control: no-store`; PDFs com `private, no-store`. Fonte e ícones são servidos pelo próprio site (nada de CDN de terceiros).
 

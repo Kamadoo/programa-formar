@@ -8,7 +8,7 @@ export async function validarTokenGestor(token: string) {
   if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) return null;
   const d = await db();
   const [t] = await d
-    .select({ gestorId: s.tokenGestor.gestorId, nome: s.gestor.nome, email: s.gestor.email })
+    .select({ gestorId: s.tokenGestor.gestorId, nome: s.gestor.nome, usuario: s.gestor.usuario })
     .from(s.tokenGestor)
     .innerJoin(s.gestor, eq(s.gestor.id, s.tokenGestor.gestorId))
     .where(

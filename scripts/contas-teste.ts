@@ -14,6 +14,7 @@ import { randomInt } from 'node:crypto';
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db, schema as s } from '@/db';
 import { gerarHashSenha } from '@/lib/auth/senha';
+import { usuarioLivreGestor } from '@/lib/auth/usuario-gestor';
 import { carregarFicticios } from './dados-ficticios';
 
 const EMAIL_GESTOR = 'gestor@formar.test';
@@ -53,11 +54,14 @@ async function criar() {
   const senhaGestor = senhaAleatoria();
   const senhaPortal = senhaAleatoria();
 
+  const nomeGestor = 'Gestor(a) de Teste';
+  const usuarioGestor = await usuarioLivreGestor(nomeGestor);
   const [gestor] = await d
     .insert(s.gestor)
     .values({
-      nome: 'Gestor(a) de Teste',
+      nome: nomeGestor,
       email: EMAIL_GESTOR,
+      usuario: usuarioGestor,
       senhaHash: await gerarHashSenha(senhaGestor),
       perfil: 'gestor_nucleo',
       senhaAlteradaEm: new Date(),
@@ -88,7 +92,7 @@ async function criar() {
   const dataBr = ate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
   console.log('\nContas de teste criadas (anote agora: as senhas não aparecem de novo).\n');
   console.log('  Gestão   → https://programaformar.example/gestao/entrar');
-  console.log(`             e-mail ${EMAIL_GESTOR}   senha ${senhaGestor}`);
+  console.log(`             usuário ${usuarioGestor}   senha ${senhaGestor}`);
   console.log('  Portal   → https://programaformar.example/entrar');
   console.log(`             usuário maria.silva   senha ${senhaPortal}`);
   console.log(`\n  Valem até ${dataBr} (horário de Brasília). Depois disso, deixam de entrar.`);

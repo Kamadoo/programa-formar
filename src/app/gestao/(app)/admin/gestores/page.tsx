@@ -15,6 +15,7 @@ export default async function Gestores() {
       id: schema.gestor.id,
       nome: schema.gestor.nome,
       email: schema.gestor.email,
+      usuario: schema.gestor.usuario,
       perfil: schema.gestor.perfil,
       ativo: schema.gestor.ativo,
       totp: schema.gestor.totpAtivadoEm,
@@ -53,7 +54,8 @@ export default async function Gestores() {
                       <strong>
                         {g.nome} {g.id === adm.id ? <span className="texto-3">(você)</span> : null}
                       </strong>
-                      <span className="quebra-livre">{g.email}</span>
+                      <span className="mono">{g.usuario}</span>
+                      <span className="quebra-livre texto-3">{g.email}</span>
                     </div>
                   </td>
                   <td data-rotulo="Situação">

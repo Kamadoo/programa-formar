@@ -12,13 +12,18 @@ export function FormEntrarGestao() {
   return (
     <form action={enviar} className="pilha g18" noValidate>
       <div className="campo">
-        <label htmlFor="email">E-mail institucional</label>
+        <label htmlFor="usuario">Usuário</label>
         <input
-          id="email"
-          name="email"
-          type="email"
+          id="usuario"
+          name="usuario"
+          type="text"
           className="entrada"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={40}
+          placeholder="nome.sobrenome"
           required
           aria-invalid={Boolean(erro)}
         />
@@ -37,6 +42,9 @@ export function FormEntrarGestao() {
         />
       </div>
       <CampoLembrar />
+      <p className="pequeno texto-3">
+        Esqueceu o usuário ou a senha? Peça ao administrador do sistema um novo link de acesso.
+      </p>
       {erro ? (
         <p id="erro-login" className="aviso aviso-erro" role="alert">
           {erro}
