@@ -3,8 +3,8 @@
  * Rode com: npm run db:seed   (o servidor de desenvolvimento precisa estar parado — o PGlite usa um único processo)
  *
  * Contas de teste:
- *   Administração → e-mail admin@formar.test   senha Admin-Formar-2026
- *   Gestão        → e-mail gestor@formar.test  senha Gestao-Formar-2026
+ *   Administração → usuário admin.teste     senha Admin-Formar-2026  (e-mail admin@formar.test)
+ *   Gestão        → usuário ana.formadora   senha Gestao-Formar-2026 (e-mail gestor@formar.test)
  *   Portal        → usuário maria.silva, senha formar2026 (conta de demonstração: entra sem o autenticador)
  *   Primeiro acesso de verdade: use o CPF de outro servidor da BASE (ex.: 231.874.560-12) e veja o código em /dev/emails
  * A gestão exige verificação em duas etapas: no primeiro acesso, leia o QR code com um app autenticador.
@@ -27,14 +27,16 @@ async function main() {
     .values({
       nome: 'Ana Formadora',
       email: 'gestor@formar.test',
+      usuario: 'ana.formadora',
       senhaHash: await gerarHashSenha('Gestao-Formar-2026'),
       perfil: 'gestor_nucleo',
       senhaAlteradaEm: new Date()
     })
     .returning({ id: s.gestor.id });
   await d.insert(s.gestor).values({
-    nome: 'Administração Teste',
+    nome: 'Admin Teste',
     email: 'admin@formar.test',
+    usuario: 'admin.teste',
     senhaHash: await gerarHashSenha('Admin-Formar-2026'),
     perfil: 'admin',
     senhaAlteradaEm: new Date()

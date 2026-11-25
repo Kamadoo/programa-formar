@@ -4,13 +4,13 @@ import { useActionState } from 'react';
 import { definirSenhaGestor } from '@/lib/acoes/conta';
 import { BotaoEnviar } from '@/components/FormAcao';
 
-export function FormSenhaGestor({ token, email }: { token: string; email: string }) {
+export function FormSenhaGestor({ token, usuario }: { token: string; usuario: string }) {
   const [r, enviar] = useActionState(definirSenhaGestor, null);
   const e = r?.erros ?? {};
   return (
     <form action={enviar} className="pilha g18" noValidate>
       <input type="hidden" name="token" value={token} />
-      <input type="email" name="email" value={email} autoComplete="username" readOnly hidden />
+      <input type="text" name="usuario" value={usuario} autoComplete="username" readOnly hidden />
       <div className="campo">
         <label htmlFor="senha">Nova senha</label>
         <input

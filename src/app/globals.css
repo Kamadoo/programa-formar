@@ -1545,3 +1545,20 @@ label.botao:has(+ input:focus-visible) {
     padding: 0;
   }
 }
+
+/* ---------- Faixa da versão de demonstração ---------- */
+.faixa-demo {
+  margin: 0;
+  padding: 6px 16px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #3d2a00;
+  background: #ffd98a;
+}
+@media print {
+  .faixa-demo {
+    display: none;
+  }
+}

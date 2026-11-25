@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CircleCheck } from 'lucide-react';
 import { gestorAtual, gestorParcial } from '@/lib/auth/sessao';
 import { MoldeAcesso } from '@/app/(acesso)/MoldeAcesso';
 import { FormEntrarGestao } from './FormEntrarGestao';
 
 export const metadata: Metadata = { title: 'Gestão · Entrar' };
 
-export default async function Page() {
+export default async function Page({ searchParams }: PageProps<'/gestao/entrar'>) {
   if (await gestorAtual()) redirect('/gestao');
   if (await gestorParcial()) redirect('/gestao/verificacao');
+  const { senha } = await searchParams;
   return (
     <MoldeAcesso
       gestao
@@ -25,6 +26,11 @@ export default async function Page() {
         </>
       }
     >
+      {senha === 'ok' ? (
+        <p className="aviso aviso-ok" role="status">
+          <CircleCheck size={18} aria-hidden="true" /> Senha salva. Entre com seu usuário e a nova senha.
+        </p>
+      ) : null}
       <FormEntrarGestao />
     </MoldeAcesso>
   );

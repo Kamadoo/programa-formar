@@ -9,6 +9,7 @@ import { auditar } from '@/lib/auditoria';
 import { conferirSenha } from '@/lib/auth/senha';
 import { bloqueadoAte, limparFalhas, registrarFalha, tempoMinimo } from '@/lib/auth/limite';
 import { encerrarSessao, iniciarSessao } from '@/lib/auth/sessao';
+import { usuarioValido } from '@/lib/dominio/regras';
 
 const MSG_BLOQUEIO = 'Muitas tentativas sem sucesso. Aguarde alguns minutos e tente de novo.';
 
@@ -17,25 +18,25 @@ const MSG_BLOQUEIO = 'Muitas tentativas sem sucesso. Aguarde alguns minutos e te
 /* ------------------------------------------------------------------ */
 
 const loginGestor = z.object({
-  email: z.string().trim().toLowerCase().email().max(200),
+  usuario: z.string().trim().toLowerCase().refine(usuarioValido),
   senha: z.string().min(1).max(200)
 });
 
 export async function entrarGestao(_: Resultado, form: FormData): Promise<Resultado> {
-  const p = loginGestor.safeParse({ email: form.get('email'), senha: form.get('senha') });
-  if (!p.success) return falha('Informe o e-mail institucional e a senha.');
-  const chave = 'gestao:' + p.data.email;
+  const p = loginGestor.safeParse({ usuario: form.get('usuario'), senha: form.get('senha') });
+  if (!p.success) return falha('Usuário ou senha não conferem.');
+  const chave = 'gestao:' + p.data.usuario;
   if (await bloqueadoAte(chave)) return falha(MSG_BLOQUEIO);
 
   const g = await tempoMinimo(700, async () => {
     const d = await db();
-    const [row] = await d.select().from(s.gestor).where(eq(s.gestor.email, p.data.email)).limit(1);
+    const [row] = await d.select().from(s.gestor).where(eq(s.gestor.usuario, p.data.usuario)).limit(1);
     const ok = await conferirSenha(row?.ativo ? row.senhaHash : null, p.data.senha);
     return ok ? row : null;
   });
   if (!g) {
     await registrarFalha(chave);
-    return falha('E-mail ou senha não conferem.');
+    return falha('Usuário ou senha não conferem.');
   }
   await limparFalhas(chave);
   // Conta de demonstração: entra direto (sem a segunda etapa), só enquanto estiver no prazo.

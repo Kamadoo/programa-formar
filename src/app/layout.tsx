@@ -31,6 +31,9 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         <a href="#conteudo" className="pular">
           Pular para o conteúdo
         </a>
+        <p className="faixa-demo" role="note">
+          Versão de demonstração · todos os dados são fictícios
+        </p>
         {children}
       </body>
     </html>

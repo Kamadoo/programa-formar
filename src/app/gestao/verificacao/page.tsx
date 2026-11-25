@@ -45,7 +45,7 @@ export default async function Verificacao() {
     );
   }
 
-  const cfg = await prepararConfiguracao(g.id, g.email);
+  const cfg = await prepararConfiguracao(g.id, g.usuario);
   return (
     <MoldeAcesso
       gestao

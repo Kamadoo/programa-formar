@@ -27,7 +27,8 @@ export default async function Conta({ searchParams }: PageProps<'/gestao/conta'>
           <p className="sobretitulo">Minha conta</p>
           <h1 className="titulo-pagina">{g.nome}</h1>
           <p className="texto-3">
-            {g.email} · {g.perfil === 'admin' ? 'Administrador' : 'Núcleo de formação'}
+            Usuário <strong className="mono">{g.usuario}</strong> · {g.email} ·{' '}
+            {g.perfil === 'admin' ? 'Administrador' : 'Núcleo de formação'}
           </p>
         </div>
       </div>
@@ -46,7 +47,7 @@ export default async function Conta({ searchParams }: PageProps<'/gestao/conta'>
             {info.senhaAlteradaEm ? `Alterada em ${dataHoraBR(info.senhaAlteradaEm)}.` : 'Nunca alterada.'} Trocar a
             senha encerra as sessões em outros aparelhos.
           </p>
-          <FormTrocarSenha acao={trocarSenhaGestor} usuario={g.email} />
+          <FormTrocarSenha acao={trocarSenhaGestor} usuario={g.usuario} />
         </section>
         <section className="cartao cartao-corpo pilha g14" aria-labelledby="t-2fa">
           <h2 id="t-2fa" className="titulo-secao">
