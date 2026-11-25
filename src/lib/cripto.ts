@@ -1,11 +1,18 @@
 import 'server-only';
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { env } from '@/lib/env';
-import { somenteDigitos } from '@/lib/dominio/regras';
+import { normalizarDocumento, somenteDigitos } from '@/lib/dominio/regras';
 
 /** HMAC-SHA256 do CPF (só dígitos): permite buscar/logar sem guardar o CPF em claro. */
 export function hashCpf(cpf: string): string {
   return createHmac('sha256', Buffer.from(env().CPF_HMAC_KEY, 'base64')).update(somenteDigitos(cpf)).digest('hex');
+}
+
+/** HMAC-SHA256 do CPF ou CNPJ das contas da gestão (tipo + valor normalizado). */
+export function hashDocumento(tipo: 'cpf' | 'cnpj', valor: string): string {
+  return createHmac('sha256', Buffer.from(env().CPF_HMAC_KEY, 'base64'))
+    .update(`${tipo}:${normalizarDocumento(valor)}`)
+    .digest('hex');
 }
 
 /** AES-256-GCM. Formato: v1.<iv>.<tag>.<dados> em base64url. */

@@ -3,6 +3,8 @@ import { asc } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { exigirAdmin } from '@/lib/auth/sessao';
 import { dataHoraBR } from '@/lib/dominio/datas';
+import { decifrarOuNulo } from '@/lib/cripto';
+import { mascararDocumento } from '@/lib/dominio/regras';
 import { AcoesGestor, NovoGestor } from './Componentes';
 
 export const metadata: Metadata = { title: 'Contas da gestão' };
@@ -20,10 +22,17 @@ export default async function Gestores() {
       ativo: schema.gestor.ativo,
       totp: schema.gestor.totpAtivadoEm,
       ultimo: schema.gestor.ultimoLoginEm,
-      senha: schema.gestor.senhaAlteradaEm
+      concluido: schema.gestor.primeiroAcessoEm,
+      documentoTipo: schema.gestor.documentoTipo,
+      documentoCifrado: schema.gestor.documentoCifrado
     })
     .from(schema.gestor)
     .orderBy(asc(schema.gestor.nome));
+  const docMascarado = (g: (typeof lista)[number]) => {
+    if (!g.documentoTipo || !g.documentoCifrado) return null;
+    const v = decifrarOuNulo(g.documentoCifrado, 'documento gestor');
+    return v ? `${g.documentoTipo.toUpperCase()} ${mascararDocumento(g.documentoTipo, v)}` : null;
+  };
 
   return (
     <div className="colunas">
@@ -56,6 +65,7 @@ export default async function Gestores() {
                       </strong>
                       <span className="mono">{g.usuario}</span>
                       <span className="quebra-livre texto-3">{g.email}</span>
+                      {docMascarado(g) ? <span className="mono texto-3 pequeno">{docMascarado(g)}</span> : null}
                     </div>
                   </td>
                   <td data-rotulo="Situação">
@@ -63,7 +73,9 @@ export default async function Gestores() {
                       <span className="chip chip-info">Administrador</span>
                     ) : !g.ativo ? (
                       <span className="chip chip-erro">Desativada</span>
-                    ) : !g.senha ? (
+                    ) : !g.concluido && !g.documentoTipo ? (
+                      <span className="chip chip-alerta">Falta CPF/CNPJ</span>
+                    ) : !g.concluido ? (
                       <span className="chip chip-alerta">Convite pendente</span>
                     ) : (
                       <span className="chip chip-ok">Ativa</span>
@@ -77,7 +89,16 @@ export default async function Gestores() {
                   </td>
                   <td className="direita">
                     {g.perfil !== 'admin' ? (
-                      <AcoesGestor id={g.id} nome={g.nome} email={g.email} ativo={g.ativo} temTotp={Boolean(g.totp)} />
+                      <AcoesGestor
+                        id={g.id}
+                        nome={g.nome}
+                        email={g.email}
+                        ativo={g.ativo}
+                        temTotp={Boolean(g.totp)}
+                        concluido={Boolean(g.concluido)}
+                        documento={docMascarado(g)}
+                        documentoTipo={g.documentoTipo}
+                      />
                     ) : null}
                   </td>
                 </tr>
@@ -91,8 +112,13 @@ export default async function Gestores() {
         <section className="cartao cartao-corpo pilha g10 pequeno texto-2" aria-label="Regras das contas">
           <p className="rotulo">Como funciona</p>
           <ul className="lista-simples">
-            <li>A pessoa recebe um link (válido por 72 h) para definir a senha.</li>
-            <li>No primeiro acesso, ativa a verificação em duas etapas — é obrigatória.</li>
+            <li>Cada conta tem um CPF ou um CNPJ, escolhido no cadastro.</li>
+            <li>
+              A pessoa recebe um e-mail e faz o primeiro acesso com esse documento: código no e-mail, aplicativo
+              autenticador (obrigatório) e senha.
+            </li>
+            <li>Depois entra com o usuário, a senha e o código do aplicativo.</li>
+            <li>&ldquo;Zerar acesso&rdquo; apaga a senha e o aplicativo e manda refazer o primeiro acesso.</li>
             <li>Contas de administrador não são criadas aqui: só pelo terminal do servidor.</li>
             <li>Desativar encerra na hora todas as sessões da pessoa.</li>
           </ul>

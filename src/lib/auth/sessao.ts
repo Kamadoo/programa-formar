@@ -140,7 +140,8 @@ export type GestorAtual = {
   usuario: string;
   perfil: 'gestor_nucleo' | 'admin';
 };
-export type GestorParcial = GestorAtual & { totpAtivo: boolean };
+/** cadastroConcluido = já criou a senha (primeiro acesso terminado). Sem isso, só vale o fluxo de primeiro acesso. */
+export type GestorParcial = GestorAtual & { totpAtivo: boolean; cadastroConcluido: boolean };
 export type ServidorAtual = {
   id: string;
   nome: string;
@@ -225,7 +226,8 @@ export const gestorParcial = cache(async (): Promise<GestorParcial | null> => {
     email: g.email,
     usuario: g.usuario,
     perfil: g.perfil,
-    totpAtivo: Boolean(g.totpSegredo)
+    totpAtivo: Boolean(g.totpSegredo),
+    cadastroConcluido: Boolean(g.primeiroAcessoEm)
   };
 });
 

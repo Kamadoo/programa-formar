@@ -99,6 +99,13 @@
       "when": 1795565006794,
       "tag": "0013_usuario_gestor",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795608775712,
+      "tag": "0014_documento_gestor",
+      "breakpoints": true
     }
   ]
 }

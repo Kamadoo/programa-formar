@@ -62,6 +62,36 @@ export function CampoSenha({
 }
 
 /** CPF: só números, com dica. */
+/** CPF ou CNPJ (contas da gestão). Aceita o CNPJ alfanumérico (letras e números). */
+export function CampoDocumento({ erro, defaultValue }: { erro?: string | null; defaultValue?: string }) {
+  return (
+    <div className="campo">
+      <label htmlFor="documento">CPF ou CNPJ</label>
+      <input
+        id="documento"
+        name="documento"
+        className="entrada num"
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        maxLength={18}
+        required
+        defaultValue={defaultValue}
+        aria-invalid={Boolean(erro)}
+        aria-describedby="documento-dica"
+        onInput={e => {
+          const el = e.currentTarget;
+          el.value = el.value.toUpperCase().replace(/[^\dA-Z./-]/g, '');
+        }}
+      />
+      <span id="documento-dica" className={erro ? 'erro-campo' : 'dica'}>
+        {erro ??
+          'O mesmo que a administração cadastrou na sua conta. Pode digitar só os números (e as letras, no CNPJ novo).'}
+      </span>
+    </div>
+  );
+}
+
 export function CampoCpf({ erro, defaultValue }: { erro?: string | null; defaultValue?: string }) {
   return (
     <div className="campo">

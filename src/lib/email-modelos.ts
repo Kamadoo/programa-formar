@@ -106,14 +106,16 @@ export function emailCodigo(opcoes: {
   finalidade: Finalidade;
   minutos: number;
   siteUrl: string;
+  area?: 'portal' | 'gestao';
 }) {
   const { nome, codigo, finalidade, minutos, siteUrl } = opcoes;
+  const local = opcoes.area === 'gestao' ? 'da gestão de formações' : 'do portal do servidor';
   const fmt = `${codigo.slice(0, 3)} ${codigo.slice(3)}`;
   const primeiro = finalidade === 'primeiro_acesso';
   const titulo = primeiro ? 'Seu código de primeiro acesso' : 'Seu código para criar uma nova senha';
   const intro = primeiro
-    ? 'Use o código abaixo na tela de <strong>primeiro acesso</strong> do portal do servidor. Depois você vai cadastrar o aplicativo autenticador e criar sua senha.'
-    : 'Recebemos um pedido para criar uma <strong>nova senha</strong> no portal do servidor. Use o código abaixo na tela &ldquo;Esqueci a senha&rdquo;.';
+    ? `Use o código abaixo na tela de <strong>primeiro acesso</strong> ${local}. Depois você vai cadastrar o aplicativo autenticador e criar sua senha.`
+    : `Recebemos um pedido para criar uma <strong>nova senha</strong> ${local === 'do portal do servidor' ? 'no portal do servidor' : 'na gestão de formações'}. Use o código abaixo na tela &ldquo;Esqueci a senha&rdquo;.`;
   const corpo =
     paragrafo(`Olá, ${esc(nome)}.`) +
     paragrafo(intro) +
@@ -130,7 +132,7 @@ export function emailCodigo(opcoes: {
         ? 'Se você não pediu este código, ignore este e-mail: sua conta continua sem acesso até que você mesmo(a) a ative.'
         : 'Se você não pediu uma nova senha, ignore este e-mail: sua senha atual continua valendo.'
     );
-  const texto = `Olá, ${nome}.\n\n${primeiro ? 'Seu código para ativar seu acesso ao portal do servidor é:' : 'Seu código para criar uma nova senha no portal do servidor é:'}\n\n    ${fmt}\n\nEle vale por ${minutos} minutos e só pode ser usado uma vez. Ninguém do Programa Formar vai pedir este código.\n\n${primeiro ? 'Se você não pediu, ignore esta mensagem.' : 'Se você não pediu, ignore esta mensagem: sua senha atual continua valendo.'}`;
+  const texto = `Olá, ${nome}.\n\n${primeiro ? `Seu código para ativar seu acesso ${local === 'do portal do servidor' ? 'ao portal do servidor' : 'à gestão de formações'} é:` : 'Seu código para criar uma nova senha no portal do servidor é:'}\n\n    ${fmt}\n\nEle vale por ${minutos} minutos e só pode ser usado uma vez. Ninguém do Programa Formar vai pedir este código.\n\n${primeiro ? 'Se você não pediu, ignore esta mensagem.' : 'Se você não pediu, ignore esta mensagem: sua senha atual continua valendo.'}`;
   return {
     assunto: `Programa Formar: ${fmt} é seu código${primeiro ? ' de primeiro acesso' : ' para nova senha'}`,
     texto,

@@ -22,6 +22,7 @@ export default async function Page({ searchParams }: PageProps<'/gestao/entrar'>
           <Link href="/entrar">
             <ArrowLeft size={14} aria-hidden="true" /> Sou servidor(a)
           </Link>
+          <Link href="/gestao/primeiro-acesso">Primeiro acesso</Link>
           <Link href="/validar">Validar um certificado</Link>
         </>
       }

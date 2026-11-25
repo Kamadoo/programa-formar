@@ -37,7 +37,8 @@ export function proxy(request: NextRequest) {
   const precisaGestor =
     pathname.startsWith('/gestao') &&
     !pathname.startsWith('/gestao/entrar') &&
-    !pathname.startsWith('/gestao/definir-senha');
+    !pathname.startsWith('/gestao/definir-senha') &&
+    !pathname.startsWith('/gestao/primeiro-acesso');
   const precisaServidor = pathname.startsWith('/portal');
   if (precisaGestor && !request.cookies.has(COOKIE_GESTOR)) {
     return NextResponse.redirect(new URL('/gestao/entrar', request.url));

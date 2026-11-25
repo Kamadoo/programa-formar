@@ -108,7 +108,10 @@ export async function definirSenhaGestor(_: Resultado, form: FormData): Promise<
       .update(s.tokenGestor)
       .set({ usadoEm: new Date() })
       .where(eq(s.tokenGestor.tokenHash, sha256(token)));
-    await tx.update(s.gestor).set({ senhaHash: hash, senhaAlteradaEm: new Date() }).where(eq(s.gestor.id, t.gestorId));
+    await tx
+      .update(s.gestor)
+      .set({ senhaHash: hash, senhaAlteradaEm: new Date(), primeiroAcessoEm: new Date() })
+      .where(eq(s.gestor.id, t.gestorId));
   });
   await auditar({
     atorTipo: 'gestor',

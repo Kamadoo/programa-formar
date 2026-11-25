@@ -6,13 +6,21 @@
  *   Administração → usuário admin.teste     senha Admin-Formar-2026  (e-mail admin@formar.test)
  *   Gestão        → usuário ana.formadora   senha Gestao-Formar-2026 (e-mail gestor@formar.test)
  *   Portal        → usuário maria.silva, senha formar2026 (conta de demonstração: entra sem o autenticador)
+ *   Gestão (primeiro acesso) → CNPJ 12.ABC.345/01DE-35 (Bruno Costa, convite pendente); o código aparece em /dev/emails
  *   Primeiro acesso de verdade: use o CPF de outro servidor da BASE (ex.: 231.874.560-12) e veja o código em /dev/emails
  * A gestão exige verificação em duas etapas: no primeiro acesso, leia o QR code com um app autenticador.
  */
 import { sql } from 'drizzle-orm';
 import { db, schema as s } from '@/db';
 import { gerarHashSenha } from '@/lib/auth/senha';
+import { cifrar, hashDocumento, tokenAleatorio } from '@/lib/cripto';
 import { carregarFicticios } from './dados-ficticios';
+
+const documento = (tipo: 'cpf' | 'cnpj', valor: string) => ({
+  documentoTipo: tipo,
+  documentoHash: hashDocumento(tipo, valor),
+  documentoCifrado: cifrar(valor)
+});
 
 async function main() {
   const d = await db();
@@ -30,7 +38,9 @@ async function main() {
       usuario: 'ana.formadora',
       senhaHash: await gerarHashSenha('Gestao-Formar-2026'),
       perfil: 'gestor_nucleo',
-      senhaAlteradaEm: new Date()
+      senhaAlteradaEm: new Date(),
+      primeiroAcessoEm: new Date(),
+      ...documento('cpf', '52998224725')
     })
     .returning({ id: s.gestor.id });
   await d.insert(s.gestor).values({
@@ -39,7 +49,17 @@ async function main() {
     usuario: 'admin.teste',
     senhaHash: await gerarHashSenha('Admin-Formar-2026'),
     perfil: 'admin',
-    senhaAlteradaEm: new Date()
+    senhaAlteradaEm: new Date(),
+    primeiroAcessoEm: new Date()
+  });
+  // Conta com convite pendente, para testar o primeiro acesso da gestão com CNPJ (alfanumérico).
+  await d.insert(s.gestor).values({
+    nome: 'Bruno Costa',
+    email: 'bruno.costa@edu.serraclara.example',
+    usuario: 'bruno.costa',
+    senhaHash: await gerarHashSenha(tokenAleatorio(48)),
+    perfil: 'gestor_nucleo',
+    ...documento('cnpj', '12ABC34501DE35')
   });
 
   const [modelo] = await d
